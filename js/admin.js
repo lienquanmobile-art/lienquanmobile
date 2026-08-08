@@ -76,13 +76,13 @@ const Admin = {
   // ---------------- Tab: Tài Khoản ----------------
   async renderAccountsTab(panel, account) {
     panel.innerHTML = `<p class="muted">Đang tải danh sách tài khoản...</p>`;
-    const accounts = await DB.getAllAccounts();
-    const users = Object.entries(accounts).filter(([, a]) => a.role === "user");
-    const admins = Object.entries(accounts).filter(([, a]) => a.role === "admin");
+    const allUsers = await DB.getAllUsers();
+    const users = Object.values(allUsers).filter((a) => a.role === "user");
+    const admins = Object.values(allUsers).filter((a) => a.role === "admin");
 
-    const row = ([name, a]) => `
+    const row = (a) => `
       <tr>
-        <td>${Utils.escapeHtml(name)}</td>
+        <td>${Utils.escapeHtml(a.username)}</td>
         <td><span class="status-dot ${a.status === "online" ? "on" : "off"}"></span>${a.status}</td>
         <td>${a.onyx ?? 0}</td>
         <td>${a.coins ?? 0}</td>
@@ -136,7 +136,7 @@ const Admin = {
         resultBox.innerHTML = `<p class="error">Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu</p>`;
         return;
       }
-      const existing = await DB.getAccount(username);
+      const existing = await DB.getUserByUsername(username);
       if (existing) {
         resultBox.innerHTML = `<p class="error">Tên đăng nhập đã tồn tại</p>`;
         return;
@@ -144,7 +144,7 @@ const Admin = {
       const tokens = await DB.getAllTokens();
       const token = Utils.generateUniqueToken(tokens);
       const hash = await Utils.hashPassword(password);
-      await DB.createAccount(username, hash, role, token);
+      await DB.createUser(username, hash, role, token);
       await DB.addLog(
         account.username,
         "Tạo tài khoản",
@@ -162,7 +162,7 @@ const Admin = {
     panel.innerHTML = `<p class="muted">Đang tải log...</p>`;
     const logs = await DB.getLogs();
     const filtered = logs.filter((l) => l.actor !== "owner");
-    const accounts = await DB.getAllAccounts();
+    const allUsers = await DB.getAllUsers();
 
     panel.innerHTML = `
       <h3>Lịch sử hoạt động</h3>
@@ -181,8 +181,8 @@ const Admin = {
       <table class="data-table">
         <thead><tr><th>Tài khoản</th><th>Vai trò</th><th>Token</th></tr></thead>
         <tbody>
-          ${Object.entries(accounts)
-            .map(([name, a]) => `<tr><td>${Utils.escapeHtml(name)}</td><td>${a.role}</td><td><code>${a.token}</code></td></tr>`)
+          ${Object.values(allUsers)
+            .map((a) => `<tr><td>${Utils.escapeHtml(a.username)}</td><td>${a.role}</td><td><code>${a.token}</code></td></tr>`)
             .join("")}
         </tbody>
       </table>
@@ -414,7 +414,7 @@ const Admin = {
         resultBox.innerHTML = `<p class="error">Vui lòng nhập tên tài khoản cần cấm</p>`;
         return;
       }
-      const target = await DB.getAccount(username);
+      const target = await DB.getUserByUsername(username);
       if (!target) {
         resultBox.innerHTML = `<p class="error">Tài khoản không tồn tại</p>`;
         return;
