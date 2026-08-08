@@ -1,9 +1,4 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getDatabase, ref, set, get, push, update, remove, query, orderByChild, equalTo } from "firebase/database";
-
-// Your web app's Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAARnQrk-U3V9bmX0T9P-P3hk5ffFhjYUo",
   authDomain: "lienquanmobile-6bcff.firebaseapp.com",
@@ -16,9 +11,5 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getDatabase(app);
-
-// Export for use in other files
-export { db, ref, set, get, push, update, remove, query, orderByChild, equalTo };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
