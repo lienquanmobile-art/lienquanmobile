@@ -39,6 +39,7 @@ async function checkBanStatus(username) {
   if (!ban.permanent && ban.until && ban.until <= Date.now()) {
     // hết hạn -> tự mở khóa
     await db.ref("bans/" + keyify(username)).remove();
+    await db.ref("ban_trigger/" + keyify(username)).remove();
     return null;
   }
   return ban;
