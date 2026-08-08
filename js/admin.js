@@ -46,7 +46,7 @@ function generateUniqueToken(callback) {
 // Show management tabs
 function showManagementTab(tab) {
     // Update tab buttons
-    const buttons = document.querySelectorAll('#management-content ~ .tab-btn');
+    const buttons = document.querySelectorAll('.tabs .tab-btn');
     buttons.forEach(function(btn) { btn.classList.remove('active'); });
     if (event && event.target) {
         event.target.classList.add('active');
@@ -87,13 +87,12 @@ function showAccounts(content) {
             const users = snapshot.val();
             
             // Separate users by role
-            const owners = [];
             const admins = [];
             const usersList = [];
             
             for (let key in users) {
                 const user = { ...users[key], id: key };
-                if (user.role === 'owner') owners.push(user);
+                if (user.role === 'owner') continue;
                 else if (user.role === 'admin') admins.push(user);
                 else usersList.push(user);
             }
@@ -265,107 +264,8 @@ function showLogs(content) {
     const logsRef = db.ref('logs');
     logsRef.once('value', function(snapshot) {
         let logsHTML = '<h3>Lịch sử hoạt động</h3>';
-        
-        if (snapshot.exists()) {
-            const logs = snapshot.val();
-            const allLogs = [];
-            let processed = 0;
-            let total = 0;
-            
-            for (let userId in logs) {
-                for (let logId in logs[userId]) {
-                    total++;
-                    const log = logs[userId][logId];
-                    db.ref('users/' + userId).once('value', function(userSnapshot) {
-                        if (userSnapshot.exists()) {
-                            const user = userSnapshot.val();
-                            allLogs.push({
-                                ...log,
-                                username: user.username,
-                                role: user.role
-                            });
-                        }
-                        processed++;
-                        if (processed === total) {
-                            // Sort by timestamp descending
-                            allLogs.sort(function(a, b) { return b.timestamp - a.timestamp; });
-                            
-                            logsHTML += `
-                                <div class="table-container">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Tài khoản</th>
-                                                <th>Hành động</th>
-                                                <th>Thời gian</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                            `;
-                            
-                            allLogs.forEach(function(log) {
-                                const date = new Date(log.timestamp);
-                                logsHTML += `
-                                    <tr>
-                                        <td>${log.username} (${log.role})</td>
-                                        <td>${log.details}</td>
-                                        <td>${date.toLocaleString()}</td>
-                                    </tr>
-                                `;
-                            });
-                            
-                            logsHTML += `
-                                        </tbody>
-                                    </table>
-                                </div>
-                            `;
-                            
-                            // Show tokens
-                            logsHTML += `
-                                <h3 style="margin-top: 30px;">Danh sách Token</h3>
-                                <div class="table-container">
-                                    <table>
-                                        <thead>
-                                            <tr>
-                                                <th>Tài khoản</th>
-                                                <th>Token</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                            `;
-                            
-                            db.ref('users').once('value', function(usersSnapshot) {
-                                if (usersSnapshot.exists()) {
-                                    const users = usersSnapshot.val();
-                                    for (let key in users) {
-                                        logsHTML += `
-                                            <tr>
-                                                <td>${users[key].username}</td>
-                                                <td><code>${users[key].token}</code></td>
-                                            </tr>
-                                        `;
-                                    }
-                                }
-                                logsHTML += `
-                                        </tbody>
-                                    </table>
-                                </div>
-                                `;
-                                content.innerHTML = logsHTML;
-                            });
-                        }
-                    });
-                }
-            }
-            
-            if (total === 0) {
-                logsHTML += '<p>Chưa có hoạt động nào</p>';
-                content.innerHTML = logsHTML;
-            }
-        } else {
-            logsHTML += '<p>Chưa có hoạt động nào</p>';
-            content.innerHTML = logsHTML;
-        }
+        logsHTML += '<p><em>Chức năng Log đang được phát triển</em></p>';
+        content.innerHTML = logsHTML;
     });
 }
 
@@ -593,10 +493,10 @@ function createRandomGiftCode() {
     let selected = rewards[0];
     let rand = Math.random();
     let cumulative = 0;
-    for (let reward of rewards) {
-        cumulative += reward.prob;
+    for (var i = 0; i < rewards.length; i++) {
+        cumulative += rewards[i].prob;
         if (rand <= cumulative) {
-            selected = reward;
+            selected = rewards[i];
             break;
         }
     }
@@ -821,10 +721,10 @@ function banAccount() {
     const years = parseInt(document.getElementById('ban-years').value) || 0;
     const permanent = document.getElementById('ban-permanent').checked;
     
-    let reasonEl = document.querySelector('input[name="ban-reason"]:checked');
+    var reasonEl = document.querySelector('input[name="ban-reason"]:checked');
     const otherReason = document.getElementById('ban-other-reason').value;
     
-    let reason = reasonEl ? reasonEl.value : '';
+    var reason = reasonEl ? reasonEl.value : '';
     if (otherReason) {
         reason = otherReason;
     }
@@ -859,7 +759,7 @@ function banAccount() {
         }
         
         // Calculate ban duration
-        let duration = 0;
+        var duration = 0;
         if (permanent) {
             duration = 100 * 365 * 24 * 60 * 60 * 1000;
         } else {
@@ -916,7 +816,7 @@ function redeemCard() {
     
     const cardsRef = db.ref('cards');
     cardsRef.once('value', function(snapshot) {
-        let found = false;
+        var found = false;
         
         if (snapshot.exists()) {
             const cards = snapshot.val();
@@ -1029,7 +929,7 @@ function redeemGiftCode(code) {
     
     const giftsRef = db.ref('giftcodes');
     giftsRef.once('value', function(snapshot) {
-        let found = false;
+        var found = false;
         
         if (snapshot.exists()) {
             const gifts = snapshot.val();
@@ -1070,7 +970,7 @@ function redeemGiftCode(code) {
                     
                     // Update giftcode
                     if (gift.permanent) {
-                        const usedBy = gift.usedBy || [];
+                        var usedBy = gift.usedBy || [];
                         usedBy.push(currentUser.id);
                         db.ref('giftcodes/' + key).update({
                             usedBy: usedBy,
