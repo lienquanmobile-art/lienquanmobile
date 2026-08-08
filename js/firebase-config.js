@@ -1,6 +1,4 @@
-// js/firebase-config.js
-// Khởi tạo Firebase (dùng bản "compat" để có thể chạy thẳng bằng <script>, không cần build tool)
-
+// ===== Cấu hình Firebase =====
 const firebaseConfig = {
   apiKey: "AIzaSyAARnQrk-U3V9bmX0T9P-P3hk5ffFhjYUo",
   authDomain: "lienquanmobile-6bcff.firebaseapp.com",
@@ -13,6 +11,4 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
-// Realtime Database gốc, các file khác sẽ dùng biến toàn cục "db"
 const db = firebase.database();
