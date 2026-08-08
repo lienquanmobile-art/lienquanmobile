@@ -1,65 +1,82 @@
 // js/db.js
 // Toàn bộ thao tác đọc/ghi Firebase Realtime Database được gom vào đây
+// Cấu trúc: users/{key ngẫu nhiên do Firebase tự sinh} -> { username, password, role, token, coins, onyx, status, created }
 
 const DB = {
-  // ---------- ACCOUNTS ----------
-  async getAccount(username) {
-    const snap = await db.ref(`accounts/${username}`).get();
-    return snap.exists() ? snap.val() : null;
-  },
-
-  async getAllAccounts() {
-    const snap = await db.ref("accounts").get();
-    return snap.exists() ? snap.val() : {};
+  // ---------- USERS ----------
+  async getAllUsers() {
+    const snap = await db.ref("users").get();
+    return snap.exists() ? snap.val() : {}; // { userId: {...} }
   },
 
   async getAllTokens() {
-    const accounts = await this.getAllAccounts();
-    return new Set(Object.values(accounts).map((a) => a.token));
+    const users = await this.getAllUsers();
+    return new Set(Object.values(users).map((u) => u.token));
   },
 
-  async findAccountByToken(token) {
-    const accounts = await this.getAllAccounts();
-    for (const [username, acc] of Object.entries(accounts)) {
-      if (acc.token === token) return { username, ...acc };
-    }
-    return null;
+  async getUserById(userId) {
+    const snap = await db.ref(`users/${userId}`).get();
+    return snap.exists() ? { id: userId, ...snap.val() } : null;
   },
 
-  async createAccount(username, passwordHash, role, token) {
-    const account = {
+  // Tìm user theo username (username là field bên trong, không phải key)
+  async getUserByUsername(username) {
+    const snap = await db.ref("users").orderByChild("username").equalTo(username).get();
+    if (!snap.exists()) return null;
+    let result = null;
+    snap.forEach((child) => {
+      result = { id: child.key, ...child.val() };
+    });
+    return result;
+  },
+
+  // Tìm user theo token
+  async getUserByToken(token) {
+    const snap = await db.ref("users").orderByChild("token").equalTo(token).get();
+    if (!snap.exists()) return null;
+    let result = null;
+    snap.forEach((child) => {
+      result = { id: child.key, ...child.val() };
+    });
+    return result;
+  },
+
+  async createUser(username, passwordHash, role, token) {
+    const ref = db.ref("users").push();
+    const user = {
+      username,
       password: passwordHash,
       role, // "owner" | "admin" | "user"
       token,
       coins: 0,
       onyx: 0,
       status: "offline",
-      createdAt: Utils.nowTs(),
+      created: Utils.nowTs(),
     };
-    await db.ref(`accounts/${username}`).set(account);
-    return account;
+    await ref.set(user);
+    return { id: ref.key, ...user };
   },
 
-  async updateAccount(username, patch) {
-    await db.ref(`accounts/${username}`).update(patch);
+  async updateUser(userId, patch) {
+    await db.ref(`users/${userId}`).update(patch);
   },
 
-  async setStatus(username, status) {
-    await db.ref(`accounts/${username}/status`).set(status);
+  async setStatus(userId, status) {
+    await db.ref(`users/${userId}/status`).set(status);
   },
 
-  async addCoins(username, amount) {
-    const ref = db.ref(`accounts/${username}/coins`);
+  async addCoins(userId, amount) {
+    const ref = db.ref(`users/${userId}/coins`);
     await ref.transaction((cur) => (cur || 0) + amount);
   },
 
-  async addOnyx(username, amount) {
-    const ref = db.ref(`accounts/${username}/onyx`);
+  async addOnyx(userId, amount) {
+    const ref = db.ref(`users/${userId}/onyx`);
     await ref.transaction((cur) => (cur || 0) + amount);
   },
 
-  async changePassword(username, newHash) {
-    await db.ref(`accounts/${username}/password`).set(newHash);
+  async changePassword(userId, newHash) {
+    await db.ref(`users/${userId}/password`).set(newHash);
   },
 
   // ---------- LOGS ----------
@@ -184,7 +201,7 @@ const DB = {
     await db.ref(`giftcodesPermanent/${code}/usedBy/${username}`).set(true);
   },
 
-  // ---------- BANS ----------
+  // ---------- BANS (vẫn khoá theo username vì đây là cách admin/owner nhập liệu) ----------
   async getBan(username) {
     const snap = await db.ref(`bans/${username}`).get();
     return snap.exists() ? snap.val() : null;
