@@ -9,12 +9,12 @@ const App = {
     this.root = document.getElementById("app-root");
     await Auth.ensureOwnerExists();
 
-    const username = Auth.getCurrentUsername();
-    if (username) {
-      const account = await DB.getAccount(username);
-      const ban = account ? await Auth.checkBan(username) : null;
+    const userId = Auth.getCurrentUserId();
+    if (userId) {
+      const account = await DB.getUserById(userId);
+      const ban = account ? await Auth.checkBan(account.username) : null;
       if (account && !ban) {
-        this.currentAccount = { username, ...account };
+        this.currentAccount = account;
         return this.renderMain();
       }
       Auth.clearSession();
@@ -276,7 +276,7 @@ const App = {
         return;
       }
       await DB.markCardUsed(code, this.currentAccount.username);
-      await DB.addOnyx(this.currentAccount.username, card.onyx);
+      await DB.addOnyx(this.currentAccount.id, card.onyx);
       await DB.addLog(
         this.currentAccount.username,
         "Nạp thẻ",
@@ -317,8 +317,8 @@ const App = {
           return;
         }
         await DB.markGiftPermanentUsed(code, this.currentAccount.username);
-        if (perm.rewardType === "coins") await DB.addCoins(this.currentAccount.username, perm.amount);
-        else await DB.addOnyx(this.currentAccount.username, perm.amount);
+        if (perm.rewardType === "coins") await DB.addCoins(this.currentAccount.id, perm.amount);
+        else await DB.addOnyx(this.currentAccount.id, perm.amount);
         await DB.addLog(
           this.currentAccount.username,
           "Nhập giftcode",
@@ -345,8 +345,8 @@ const App = {
       }
       const reward = Admin.rollGiftAnyReward();
       await DB.markGiftAnyUsed(code, this.currentAccount.username);
-      if (reward.type === "coins") await DB.addCoins(this.currentAccount.username, reward.amount);
-      else await DB.addOnyx(this.currentAccount.username, reward.amount);
+      if (reward.type === "coins") await DB.addCoins(this.currentAccount.id, reward.amount);
+      else await DB.addOnyx(this.currentAccount.id, reward.amount);
       await DB.addLog(
         this.currentAccount.username,
         "Nhập giftcode",
