@@ -8,6 +8,10 @@ const appRoot = () => document.getElementById("app");
 
 async function initApp() {
   await seedOwnerAccount();
+  
+  // Kiểm tra ban khi load
+  await checkBanOnLoad();
+  
   const savedUsername = localStorage.getItem("currentUser");
   if (savedUsername) {
     const user = await getUser(savedUsername);
@@ -15,6 +19,8 @@ async function initApp() {
     if (user && !ban) {
       setCurrentUser(user);
       renderDashboard();
+      // Bắt đầu kiểm tra ban realtime sau khi đăng nhập
+      setTimeout(startBanChecker, 1000);
       return;
     }
     localStorage.removeItem("currentUser");
@@ -24,6 +30,12 @@ async function initApp() {
 
 function goToLogin() {
   setCurrentUser(null);
+  if (banCheckInterval) {
+    clearInterval(banCheckInterval);
+    banCheckInterval = null;
+  }
+  banPopupShown = false;
+  
   appRoot().innerHTML = `
     <div class="login-wrap">
       <div class="neon-box login-box">
@@ -47,6 +59,7 @@ function goToLogin() {
     localStorage.setItem("currentUser", res.user.username);
     setCurrentUser(res.user);
     renderDashboard();
+    setTimeout(startBanChecker, 1000);
   };
 
   document.getElementById("loginTokenBtn").onclick = () => goToTokenLogin();
@@ -74,6 +87,7 @@ function goToTokenLogin() {
     localStorage.setItem("currentUser", res.user.username);
     setCurrentUser(res.user);
     renderDashboard();
+    setTimeout(startBanChecker, 1000);
   };
   document.getElementById("tokenBackBtn").onclick = () => goToLogin();
 }
