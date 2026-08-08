@@ -1,127 +1,861 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý Tài Khoản</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <div id="app">
-        <!-- ===== LOGIN FORM ===== -->
-        <div id="login-form" class="login-wrapper">
-            <div class="login-box">
-                <div class="logo">
-                    <span class="icon">🚀</span>
-                    <h1>Đăng nhập <span>Hệ Thống</span></h1>
-                    <p>Quản lý tài khoản an toàn & bảo mật</p>
-                </div>
+/* ===== RESET & BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-                <div id="login-alert" class="alert" style="display:none;"></div>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
 
-                <div class="form-group">
-                    <label>Tên đăng nhập</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon">👤</span>
-                        <input type="text" id="username" placeholder="Nhập tên đăng nhập">
-                    </div>
-                </div>
+/* ===== LOGIN CONTAINER ===== */
+.login-wrapper {
+    width: 100%;
+    max-width: 440px;
+}
 
-                <div class="form-group">
-                    <label>Mật khẩu</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon">🔒</span>
-                        <input type="password" id="password" placeholder="Nhập mật khẩu">
-                        <button class="toggle-password" onclick="togglePassword()">👁️</button>
-                    </div>
-                </div>
+.login-box {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 48px 40px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
 
-                <div class="options-row">
-                    <label class="remember-me">
-                        <input type="checkbox"> Ghi nhớ tôi
-                    </label>
-                    <a href="#" class="forgot-link">Quên mật khẩu?</a>
-                </div>
+.login-box::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 20%, rgba(102, 126, 234, 0.08), transparent 50%);
+    pointer-events: none;
+}
 
-                <button onclick="login()" class="btn btn-primary">Đăng nhập</button>
+.login-box .logo {
+    text-align: center;
+    margin-bottom: 32px;
+}
 
-                <div class="divider">
-                    <span>hoặc</span>
-                </div>
+.login-box .logo .icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 8px;
+}
 
-                <button onclick="showTokenLogin()" class="btn btn-secondary">Đăng nhập bằng token</button>
-            </div>
-        </div>
+.login-box .logo h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
 
-        <!-- ===== TOKEN LOGIN FORM ===== -->
-        <div id="token-login-form" class="login-wrapper" style="display:none">
-            <div class="login-box">
-                <div class="logo">
-                    <span class="icon">🔑</span>
-                    <h1>Đăng nhập <span>bằng Token</span></h1>
-                    <p>Nhập mã token của bạn để truy cập</p>
-                </div>
+.login-box .logo h1 span {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
 
-                <div class="form-group">
-                    <label>Token của bạn</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon">🎫</span>
-                        <input type="text" id="token-input" placeholder="Nhập token">
-                    </div>
-                </div>
+.login-box .logo p {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+    margin-top: 4px;
+}
 
-                <button onclick="loginWithToken()" class="btn btn-primary">Xác nhận</button>
+/* ===== FORM ===== */
+.form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
 
-                <div class="back-link">
-                    <button onclick="showLogin()">← Quay lại đăng nhập thường</button>
-                </div>
-            </div>
-        </div>
+.form-group label {
+    display: block;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+}
 
-        <!-- ===== DASHBOARD ===== -->
-        <div id="dashboard" style="display:none">
-            <nav class="navbar">
-                <div class="nav-menu">
-                    <button onclick="showPage('home')" class="nav-btn active">🏠 Trang Chủ</button>
-                    <button onclick="showPage('management')" id="management-tab" class="nav-btn" style="display:none">⚙️ Quản Lí</button>
-                    <button onclick="showPage('settings')" class="nav-btn">🔧 Cài Đặt</button>
-                </div>
-                <div class="user-info">
-                    <span id="current-user"></span>
-                    <span id="user-role" class="badge"></span>
-                </div>
-            </nav>
-            <div id="content">
-                <!-- Pages will be loaded here -->
-            </div>
-        </div>
-    </div>
+.form-group .input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    transition: all 0.3s ease;
+}
 
-    <script>
-        // Toggle password visibility
-        function togglePassword() {
-            const input = document.getElementById('password');
-            const btn = document.querySelector('.toggle-password');
-            if (input.type === 'password') {
-                input.type = 'text';
-                btn.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                btn.textContent = '👁️';
-            }
-        }
-    </script>
+.form-group .input-wrapper:focus-within {
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
 
-    <!-- Load Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+.form-group .input-wrapper .input-icon {
+    padding: 0 0 0 16px;
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.form-group .input-wrapper input {
+    width: 100%;
+    padding: 14px 16px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+}
+
+.form-group .input-wrapper input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.form-group .input-wrapper .toggle-password {
+    padding: 0 16px 0 0;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    font-size: 18px;
+    transition: color 0.3s ease;
+    flex-shrink: 0;
+}
+
+.form-group .input-wrapper .toggle-password:hover {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== OPTIONS ROW ===== */
+.options-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 0 24px 0;
+}
+
+.options-row .remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.options-row .remember-me input[type="checkbox"] {
+    accent-color: #667eea;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.options-row .forgot-link {
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 13px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.options-row .forgot-link:hover {
+    color: #667eea;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.3px;
+}
+
+/* Cả 2 nút đều màu tím gradient giống nhau */
+.btn-primary,
+.btn-secondary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.35);
+}
+
+.btn-primary:hover,
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.45);
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.divider span {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* ===== TOKEN LOGIN ===== */
+.token-section {
+    margin-top: 8px;
+}
+
+.token-section .token-input-wrapper {
+    display: flex;
+    gap: 10px;
+}
+
+.token-section .token-input-wrapper input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.token-section .token-input-wrapper input:focus {
+    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.token-section .token-input-wrapper input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.token-section .token-input-wrapper .btn {
+    width: auto;
+    padding: 12px 24px;
+    flex-shrink: 0;
+}
+
+/* ===== BACK LINK ===== */
+.back-link {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.back-link button {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 13px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.back-link button:hover {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* ===== ALERT ===== */
+.alert {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    margin-bottom: 16px;
+    display: none;
+}
+
+.alert-error {
+    background: rgba(229, 62, 62, 0.15);
+    border: 1px solid rgba(229, 62, 62, 0.2);
+    color: #fc8181;
+    display: block;
+}
+
+.alert-success {
+    background: rgba(72, 187, 120, 0.15);
+    border: 1px solid rgba(72, 187, 120, 0.2);
+    color: #68d391;
+    display: block;
+}
+
+/* ===== DASHBOARD ===== */
+#dashboard {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 16px 28px;
+    border-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.nav-menu {
+    display: flex;
+    gap: 6px;
+}
+
+.nav-btn {
+    padding: 10px 22px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-btn.active {
+    background: rgba(102, 126, 234, 0.2);
+    color: #667eea;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-info #current-user {
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* ===== BADGE ===== */
+.badge {
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge-owner {
+    background: linear-gradient(135deg, #f6ad55, #ed8936);
+    color: #1a1a2e;
+}
+
+.badge-admin {
+    background: linear-gradient(135deg, #63b3ed, #4299e1);
+    color: #1a1a2e;
+}
+
+.badge-user {
+    background: linear-gradient(135deg, #68d391, #38a169);
+    color: #1a1a2e;
+}
+
+/* ===== PAGE CONTENT ===== */
+.page-content {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 28px;
+    border-radius: 16px;
+}
+
+.page-content h2 {
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.page-content h3 {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 20px 0 12px 0;
+}
+
+/* ===== TABS ===== */
+.tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    padding: 8px 20px;
+    border: none;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.tab-btn.active {
+    background: rgba(102, 126, 234, 0.15);
+    color: #667eea;
+}
+
+/* ===== TABLE ===== */
+.table-container {
+    overflow-x: auto;
+    margin-top: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+th {
+    padding: 12px 16px;
+    text-align: left;
+    color: rgba(255, 255, 255, 0.4);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+td {
+    padding: 12px 16px;
+    color: rgba(255, 255, 255, 0.7);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.status-online {
+    color: #68d391;
+}
+
+.status-offline {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.status-banned {
+    color: #fc8181;
+}
+
+/* ===== GAME ===== */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+}
+
+#snake-canvas {
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.06);
+    background: #0f0c29;
+}
+
+.score-display {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.score-display span {
+    background: rgba(255, 255, 255, 0.04);
+    padding: 6px 18px;
+    border-radius: 10px;
+}
+
+.game-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.game-controls .btn {
+    width: auto;
+    padding: 10px 24px;
+}
+
+/* ===== RESOURCES ===== */
+.resources {
+    display: flex;
+    gap: 24px;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.resource-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.resource-item .icon {
+    font-size: 20px;
+}
+
+.plus-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plus-btn:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+}
+
+/* ===== FORM ROW ===== */
+.form-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+/* ===== CHECKBOX & RADIO ===== */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 15px 0;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #667eea;
+    cursor: pointer;
+}
+
+.reason-group {
+    margin: 15px 0;
+}
+
+.reason-item {
+    display: block;
+    margin: 10px 0;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.reason-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.reason-item input[type="radio"] {
+    accent-color: #667eea;
+    margin-right: 10px;
+}
+
+.reason-item label {
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+}
+
+/* ===== TOKEN DISPLAY ===== */
+#new-token-display {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 20px;
+}
+
+#new-token-display strong {
+    color: rgba(255, 255, 255, 0.7);
+    display: block;
+    margin-bottom: 8px;
+}
+
+#new-token-display #new-token-text {
+    color: #667eea;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    word-break: break-all;
+}
+
+/* ===== CARD RESULT ===== */
+#card-result,
+#giftcode-result,
+#giftcode-permanent-result {
+    margin-top: 20px;
+}
+
+#card-result > div,
+#giftcode-result > div,
+#giftcode-permanent-result > div {
+    padding: 18px 22px;
+    background: rgba(72, 187, 120, 0.1);
+    border: 1px solid rgba(72, 187, 120, 0.2);
+    border-radius: 12px;
+}
+
+#card-result > div p,
+#giftcode-result > div p,
+#giftcode-permanent-result > div p {
+    color: rgba(255, 255, 255, 0.85);
+    margin: 5px 0;
+}
+
+#card-result > div strong,
+#giftcode-result > div strong,
+#giftcode-permanent-result > div strong {
+    color: #68d391;
+}
+
+/* ===== MODAL ===== */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.modal-content {
+    background: rgba(30, 27, 75, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 32px;
+    border-radius: 20px;
+    max-width: 480px;
+    width: 92%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 26px;
+    color: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    color: #fff;
+    transform: rotate(90deg);
+}
+
+.modal-content ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 12px;
+}
+
+.modal-content ul li {
+    padding: 10px 14px;
+    margin: 4px 0;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    border-left: 3px solid #667eea;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 480px) {
+    .login-box {
+        padding: 32px 24px;
+    }
     
-    <!-- Load JavaScript files -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/snake.js"></script>
-    <script src="js/admin.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script src="js/app.js"></script>
-</body>
-</html>
+    .login-box .logo h1 {
+        font-size: 22px;
+    }
+    
+    .navbar {
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px 18px;
+    }
+    
+    .nav-menu {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .nav-btn {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+    
+    .page-content {
+        padding: 18px 14px;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-row .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .token-section .token-input-wrapper {
+        flex-direction: column;
+    }
+    
+    .token-section .token-input-wrapper .btn {
+        width: 100%;
+    }
+    
+    .options-row {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .modal-content {
+        padding: 24px 18px;
+    }
+    
+    .resources {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .game-controls .btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+
+    .game-controls {
+        gap: 6px;
+    }
+
+    #snake-canvas {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1/1;
+    }
+
+    .score-display {
+        font-size: 15px;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    th, td {
+        padding: 8px 10px;
+    }
+}
