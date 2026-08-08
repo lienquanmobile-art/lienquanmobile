@@ -44,7 +44,7 @@ async function genUniqueToken() {
   let token;
   let exists = true;
   while (exists) {
-    token = Array.from({ length: 12 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+    token = Array.from({ length: 20 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
     const snap = await db.ref("tokens/" + keyify(token)).get();
     exists = snap.exists();
   }
