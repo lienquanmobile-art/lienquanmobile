@@ -84,7 +84,9 @@ function generateFood() {
             x: Math.floor(Math.random() * 15),
             y: Math.floor(Math.random() * 15)
         };
-        valid = !snake.some(segment => segment.x === newFood.x && segment.y === newFood.y);
+        valid = !snake.some(function(segment) {
+            return segment.x === newFood.x && segment.y === newFood.y;
+        });
     }
     food = newFood;
 }
@@ -109,7 +111,9 @@ function gameTick() {
     }
     
     // Check self collision
-    if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+    if (snake.some(function(segment) {
+        return segment.x === head.x && segment.y === head.y;
+    })) {
         gameOver();
         return;
     }
