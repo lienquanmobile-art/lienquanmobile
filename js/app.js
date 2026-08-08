@@ -1,6 +1,6 @@
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Hệ thống quản lý tài khoản đã sẵn sàng');
+    console.log('🚀 Hệ thống quản lý tài khoản đã sẵn sàng');
     
     // Add enter key support for login
     document.getElementById('username').addEventListener('keypress', function(e) {
