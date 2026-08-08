@@ -1,9 +1,5 @@
-import { db, ref, set, get, push, update, query, orderByChild, equalTo } from './firebase-config.js';
-
-let currentUser = null;
-
 // Login function
-window.login = async function() {
+function login() {
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     
@@ -12,9 +8,8 @@ window.login = async function() {
         return;
     }
     
-    try {
-        const usersRef = ref(db, 'users');
-        const snapshot = await get(usersRef);
+    const usersRef = db.ref('users');
+    usersRef.once('value', function(snapshot) {
         let found = false;
         
         if (snapshot.exists()) {
@@ -23,13 +18,6 @@ window.login = async function() {
                 if (users[key].username === username && users[key].password === password) {
                     found = true;
                     currentUser = { ...users[key], id: key };
-                    
-                    // Log login
-                    await logAction(key, 'login', `Đăng nhập vào lúc ${new Date().toLocaleTimeString()}`);
-                    
-                    // Update status
-                    await update(ref(db, `users/${key}/status`), 'online');
-                    
                     showDashboard(currentUser);
                     break;
                 }
@@ -39,14 +27,11 @@ window.login = async function() {
         if (!found) {
             alert('Tên đăng nhập hoặc mật khẩu không đúng');
         }
-    } catch (error) {
-        console.error('Login error:', error);
-        alert('Có lỗi xảy ra, vui lòng thử lại');
-    }
+    });
 }
 
-// Token login
-window.loginWithToken = async function() {
+// Token login function
+function loginWithToken() {
     const token = document.getElementById('token-input').value;
     
     if (!token) {
@@ -54,9 +39,8 @@ window.loginWithToken = async function() {
         return;
     }
     
-    try {
-        const usersRef = ref(db, 'users');
-        const snapshot = await get(usersRef);
+    const usersRef = db.ref('users');
+    usersRef.once('value', function(snapshot) {
         let found = false;
         
         if (snapshot.exists()) {
@@ -65,16 +49,6 @@ window.loginWithToken = async function() {
                 if (users[key].token === token) {
                     found = true;
                     currentUser = { ...users[key], id: key };
-                    
-                    // Check if banned
-                    if (currentUser.banned && currentUser.banned.until > Date.now()) {
-                        alert('Tài khoản của bạn đã bị cấm');
-                        return;
-                    }
-                    
-                    await logAction(key, 'login', `Đăng nhập bằng token vào lúc ${new Date().toLocaleTimeString()}`);
-                    await update(ref(db, `users/${key}/status`), 'online');
-                    
                     showDashboard(currentUser);
                     break;
                 }
@@ -84,53 +58,19 @@ window.loginWithToken = async function() {
         if (!found) {
             alert('Token không hợp lệ');
         }
-    } catch (error) {
-        console.error('Token login error:', error);
-        alert('Có lỗi xảy ra, vui lòng thử lại');
-    }
+    });
 }
 
 // Show token login form
-window.showTokenLogin = function() {
+function showTokenLogin() {
     document.getElementById('login-form').style.display = 'none';
     document.getElementById('token-login-form').style.display = 'block';
 }
 
 // Show normal login form
-window.showLogin = function() {
+function showLogin() {
     document.getElementById('login-form').style.display = 'block';
     document.getElementById('token-login-form').style.display = 'none';
 }
 
-// Log actions
-async function logAction(userId, action, details) {
-    try {
-        const logsRef = ref(db, `logs/${userId}`);
-        const newLogRef = push(logsRef);
-        await set(newLogRef, {
-            action: action,
-            details: details,
-            timestamp: Date.now()
-        });
-    } catch (error) {
-        console.error('Log error:', error);
-    }
-}
-
-// Check if user has permission
-function hasPermission(user, action) {
-    if (!user) return false;
-    
-    switch(user.role) {
-        case 'owner':
-            return true;
-        case 'admin':
-            return action !== 'createAdmin' && action !== 'viewLogs';
-        case 'user':
-            return action === 'playGame' || action === 'changePassword';
-        default:
-            return false;
-    }
-}
-
-export { currentUser, hasPermission, logAction };
+let currentUser = null;
