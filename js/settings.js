@@ -38,14 +38,14 @@ const Settings = {
         resultBox.innerHTML = `<p class="error">Mật khẩu mới xác nhận không khớp</p>`;
         return;
       }
-      const fresh = await DB.getAccount(account.username);
+      const fresh = await DB.getUserById(account.id);
       const oldHash = await Utils.hashPassword(oldPass);
       if (oldHash !== fresh.password) {
         resultBox.innerHTML = `<p class="error">Mật khẩu cũ không đúng</p>`;
         return;
       }
       const newHash = await Utils.hashPassword(newPass);
-      await DB.changePassword(account.username, newHash);
+      await DB.changePassword(account.id, newHash);
       await DB.addLog(account.username, "Đổi mật khẩu", `${account.username} đã đổi mật khẩu`);
       resultBox.innerHTML = `<p class="success">Đổi mật khẩu thành công</p>`;
       panel.querySelector("#old-pass").value = "";
