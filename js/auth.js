@@ -1,31 +1,32 @@
 // js/auth.js
 // Xử lý đăng nhập bằng tài khoản/mật khẩu hoặc bằng token, và quản lý phiên đăng nhập
+// Lưu ý: mỗi user giờ nằm ở users/{key ngẫu nhiên}, nên đăng nhập phải TRUY VẤN theo field username/token
 
 const Auth = {
-  SESSION_KEY: "qltk_session_username",
+  SESSION_KEY: "qltk_session_userid",
 
   // Tạo tài khoản Owner mặc định nếu chưa tồn tại tài khoản Owner nào
   async ensureOwnerExists() {
-    const accounts = await DB.getAllAccounts();
-    const hasOwner = Object.values(accounts).some((a) => a.role === "owner");
+    const users = await DB.getAllUsers();
+    const hasOwner = Object.values(users).some((u) => u.role === "owner");
     if (hasOwner) return;
 
-    const tokens = new Set(Object.values(accounts).map((a) => a.token));
+    const tokens = new Set(Object.values(users).map((u) => u.token));
     const token = Utils.generateUniqueToken(tokens);
     const passwordHash = await Utils.hashPassword("owner123");
-    await DB.createAccount("owner", passwordHash, "owner", token);
+    await DB.createUser("owner", passwordHash, "owner", token);
     console.log(
       "%cĐã tạo tài khoản Owner mặc định -> Tên đăng nhập: owner | Mật khẩu: owner123. Hãy đổi mật khẩu ngay!",
       "color: orange; font-weight: bold;"
     );
   },
 
-  getCurrentUsername() {
+  getCurrentUserId() {
     return sessionStorage.getItem(this.SESSION_KEY);
   },
 
-  setCurrentUsername(username) {
-    sessionStorage.setItem(this.SESSION_KEY, username);
+  setCurrentUserId(userId) {
+    sessionStorage.setItem(this.SESSION_KEY, userId);
   },
 
   clearSession() {
@@ -44,36 +45,36 @@ const Auth = {
   },
 
   async loginWithPassword(username, password) {
-    const account = await DB.getAccount(username);
-    if (!account) return { ok: false, error: "Tài khoản không tồn tại" };
+    const user = await DB.getUserByUsername(username);
+    if (!user) return { ok: false, error: "Tài khoản không tồn tại" };
 
     const hash = await Utils.hashPassword(password);
-    if (hash !== account.password) return { ok: false, error: "Sai mật khẩu" };
+    if (hash !== user.password) return { ok: false, error: "Sai mật khẩu" };
 
-    const ban = await this.checkBan(username);
+    const ban = await this.checkBan(user.username);
     if (ban) return { ok: false, error: this.banMessage(ban) };
 
-    this.setCurrentUsername(username);
-    await DB.setStatus(username, "online");
-    await DB.addLog(username, "Đăng nhập", `${username} đã đăng nhập vào lúc ${Utils.formatDateTime(Utils.nowTs())}`);
-    return { ok: true, account: { username, ...account } };
+    this.setCurrentUserId(user.id);
+    await DB.setStatus(user.id, "online");
+    await DB.addLog(user.username, "Đăng nhập", `${user.username} đã đăng nhập vào lúc ${Utils.formatDateTime(Utils.nowTs())}`);
+    return { ok: true, account: user };
   },
 
   async loginWithToken(token) {
-    const found = await DB.findAccountByToken(token);
-    if (!found) return { ok: false, error: "Token không hợp lệ" };
+    const user = await DB.getUserByToken(token);
+    if (!user) return { ok: false, error: "Token không hợp lệ" };
 
-    const ban = await this.checkBan(found.username);
+    const ban = await this.checkBan(user.username);
     if (ban) return { ok: false, error: this.banMessage(ban) };
 
-    this.setCurrentUsername(found.username);
-    await DB.setStatus(found.username, "online");
+    this.setCurrentUserId(user.id);
+    await DB.setStatus(user.id, "online");
     await DB.addLog(
-      found.username,
+      user.username,
       "Đăng nhập bằng token",
-      `${found.username} đã đăng nhập bằng token vào lúc ${Utils.formatDateTime(Utils.nowTs())}`
+      `${user.username} đã đăng nhập bằng token vào lúc ${Utils.formatDateTime(Utils.nowTs())}`
     );
-    return { ok: true, account: found };
+    return { ok: true, account: user };
   },
 
   banMessage(ban) {
@@ -83,9 +84,9 @@ const Auth = {
   },
 
   async logout() {
-    const username = this.getCurrentUsername();
-    if (username) {
-      await DB.setStatus(username, "offline");
+    const userId = this.getCurrentUserId();
+    if (userId) {
+      await DB.setStatus(userId, "offline");
     }
     this.clearSession();
   },
