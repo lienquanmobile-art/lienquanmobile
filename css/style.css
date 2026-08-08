@@ -1,704 +1,127 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-    min-height: 100vh;
-    padding: 20px;
-    color: #fff;
-}
-
-/* ===== CONTAINER ===== */
-.container {
-    max-width: 420px;
-    margin: 60px auto;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 40px 35px;
-    border-radius: 20px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-}
-
-.container h2 {
-    text-align: center;
-    font-size: 28px;
-    font-weight: 700;
-    margin-bottom: 30px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-/* ===== FORM ===== */
-.form-group {
-    margin-bottom: 20px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    color: rgba(255, 255, 255, 0.7);
-    font-weight: 500;
-    font-size: 14px;
-    letter-spacing: 0.5px;
-}
-
-.form-group input,
-.form-group select {
-    width: 100%;
-    padding: 14px 16px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    font-size: 15px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
-    transition: all 0.3s ease;
-    outline: none;
-}
-
-.form-group input::placeholder {
-    color: rgba(255, 255, 255, 0.3);
-}
-
-.form-group input:focus,
-.form-group select:focus {
-    border-color: #667eea;
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 20px rgba(102, 126, 234, 0.15);
-}
-
-.form-group select option {
-    background: #1a1a2e;
-    color: #fff;
-}
-
-/* ===== BUTTONS ===== */
-.btn {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 12px;
-    transition: all 0.3s ease;
-    letter-spacing: 0.5px;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.btn-primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
-}
-
-.btn-secondary {
-    background: linear-gradient(135deg, #48bb78, #38a169);
-    color: white;
-    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
-}
-
-.btn-secondary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(72, 187, 120, 0.5);
-}
-
-.btn-danger {
-    background: linear-gradient(135deg, #fc8181, #e53e3e);
-    color: white;
-    box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4);
-}
-
-.btn-danger:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(229, 62, 62, 0.5);
-}
-
-.btn-warning {
-    background: linear-gradient(135deg, #f6ad55, #dd6b20);
-    color: white;
-    box-shadow: 0 4px 15px rgba(221, 107, 32, 0.4);
-}
-
-.btn-warning:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(221, 107, 32, 0.5);
-}
-
-.btn-success {
-    background: linear-gradient(135deg, #68d391, #38a169);
-    color: white;
-    box-shadow: 0 4px 15px rgba(56, 161, 105, 0.4);
-}
-
-.btn-success:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(56, 161, 105, 0.5);
-}
-
-.btn-sm {
-    padding: 8px 16px;
-    font-size: 13px;
-    width: auto;
-    margin-top: 0;
-}
-
-/* ===== NAVBAR ===== */
-.navbar {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 15px 30px;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-.nav-menu {
-    display: flex;
-    gap: 8px;
-}
-
-.nav-btn {
-    padding: 10px 22px;
-    border: none;
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.6);
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.nav-btn:hover {
-    background: rgba(102, 126, 234, 0.2);
-    color: #fff;
-    transform: translateY(-2px);
-}
-
-.nav-btn.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.user-info #current-user {
-    color: #fff;
-    font-weight: 600;
-    font-size: 15px;
-}
-
-.badge {
-    padding: 5px 14px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.badge-owner {
-    background: linear-gradient(135deg, #f6ad55, #ed8936);
-    color: #1a1a2e;
-}
-
-.badge-admin {
-    background: linear-gradient(135deg, #63b3ed, #4299e1);
-    color: #1a1a2e;
-}
-
-.badge-user {
-    background: linear-gradient(135deg, #68d391, #38a169);
-    color: #1a1a2e;
-}
-
-/* ===== PAGE CONTENT ===== */
-.page-content {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-.page-content h2 {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 25px;
-    color: #fff;
-}
-
-.page-content h3 {
-    font-size: 18px;
-    font-weight: 600;
-    margin: 20px 0 15px 0;
-    color: rgba(255, 255, 255, 0.9);
-}
-
-/* ===== TABS ===== */
-.tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 25px;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.06);
-    padding-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.tab-btn {
-    padding: 10px 22px;
-    border: none;
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.5);
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.tab-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-.tab-btn.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-/* ===== TABLE ===== */
-.table-container {
-    overflow-x: auto;
-    margin-top: 15px;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-}
-
-th {
-    padding: 14px 18px;
-    text-align: left;
-    background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.7);
-    font-weight: 600;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-td {
-    padding: 14px 18px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.85);
-}
-
-tr:hover td {
-    background: rgba(255, 255, 255, 0.03);
-}
-
-.status-online {
-    color: #68d391;
-    font-weight: 600;
-}
-
-.status-offline {
-    color: rgba(255, 255, 255, 0.3);
-    font-weight: 600;
-}
-
-.status-banned {
-    color: #fc8181;
-    font-weight: 600;
-}
-
-/* ===== GAME ===== */
-.game-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    padding: 20px;
-}
-
-#snake-canvas {
-    border-radius: 12px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    background: #0f0c29;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-}
-
-.score-display {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #fff;
-    display: flex;
-    gap: 30px;
-}
-
-.score-display span {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 8px 20px;
-    border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.game-controls {
-    margin-top: 20px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.game-controls .btn {
-    width: auto;
-    padding: 10px 28px;
-    margin-top: 0;
-}
-
-/* ===== RESOURCES ===== */
-.resources {
-    display: flex;
-    gap: 30px;
-    margin-bottom: 25px;
-    padding: 18px 25px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    flex-wrap: wrap;
-}
-
-.resource-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 17px;
-    font-weight: 600;
-    color: #fff;
-}
-
-.resource-item .icon {
-    font-size: 22px;
-}
-
-.plus-btn {
-    background: linear-gradient(135deg, #48bb78, #38a169);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    font-size: 20px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.plus-btn:hover {
-    transform: scale(1.15) rotate(90deg);
-    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
-}
-
-/* ===== MODAL ===== */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-.modal-content {
-    background: rgba(30, 27, 75, 0.95);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 35px;
-    border-radius: 20px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.modal-header h3 {
-    color: #fff;
-    font-size: 22px;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 28px;
-    cursor: pointer;
-    color: rgba(255, 255, 255, 0.3);
-    transition: all 0.3s ease;
-}
-
-.close-btn:hover {
-    color: #fff;
-    transform: rotate(90deg);
-}
-
-.modal-content ul {
-    list-style: none;
-    padding: 0;
-    margin-top: 15px;
-}
-
-.modal-content ul li {
-    padding: 10px 15px;
-    margin: 5px 0;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    color: rgba(255, 255, 255, 0.8);
-    border-left: 3px solid #667eea;
-}
-
-/* ===== FORM ROW ===== */
-.form-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 15px;
-}
-
-.form-row .form-group {
-    flex: 1;
-    margin-bottom: 0;
-}
-
-/* ===== CHECKBOX & RADIO ===== */
-.checkbox-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 15px 0;
-}
-
-.checkbox-group input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    accent-color: #667eea;
-    cursor: pointer;
-}
-
-.reason-group {
-    margin: 15px 0;
-}
-
-.reason-item {
-    display: block;
-    margin: 10px 0;
-    padding: 10px 15px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s ease;
-}
-
-.reason-item:hover {
-    background: rgba(255, 255, 255, 0.06);
-}
-
-.reason-item input[type="radio"] {
-    accent-color: #667eea;
-    margin-right: 10px;
-}
-
-.reason-item label {
-    color: rgba(255, 255, 255, 0.8);
-    cursor: pointer;
-}
-
-/* ===== TOKEN DISPLAY ===== */
-#new-token-display {
-    background: rgba(102, 126, 234, 0.1);
-    border: 1px solid rgba(102, 126, 234, 0.2);
-    border-radius: 12px;
-    padding: 18px;
-    margin-top: 20px;
-}
-
-#new-token-display strong {
-    color: rgba(255, 255, 255, 0.7);
-    display: block;
-    margin-bottom: 8px;
-}
-
-#new-token-display #new-token-text {
-    color: #667eea;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    word-break: break-all;
-}
-
-/* ===== CARD RESULT ===== */
-#card-result,
-#giftcode-result,
-#giftcode-permanent-result {
-    margin-top: 20px;
-}
-
-#card-result > div,
-#giftcode-result > div,
-#giftcode-permanent-result > div {
-    padding: 18px 22px;
-    background: rgba(72, 187, 120, 0.1);
-    border: 1px solid rgba(72, 187, 120, 0.2);
-    border-radius: 12px;
-}
-
-#card-result > div p,
-#giftcode-result > div p,
-#giftcode-permanent-result > div p {
-    color: rgba(255, 255, 255, 0.85);
-    margin: 5px 0;
-}
-
-#card-result > div strong,
-#giftcode-result > div strong,
-#giftcode-permanent-result > div strong {
-    color: #68d391;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Tài Khoản</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- ===== LOGIN FORM ===== -->
+        <div id="login-form" class="login-wrapper">
+            <div class="login-box">
+                <div class="logo">
+                    <span class="icon">🚀</span>
+                    <h1>Đăng nhập <span>Hệ Thống</span></h1>
+                    <p>Quản lý tài khoản an toàn & bảo mật</p>
+                </div>
+
+                <div id="login-alert" class="alert" style="display:none;"></div>
+
+                <div class="form-group">
+                    <label>Tên đăng nhập</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="username" placeholder="Nhập tên đăng nhập">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="password" placeholder="Nhập mật khẩu">
+                        <button class="toggle-password" onclick="togglePassword()">👁️</button>
+                    </div>
+                </div>
+
+                <div class="options-row">
+                    <label class="remember-me">
+                        <input type="checkbox"> Ghi nhớ tôi
+                    </label>
+                    <a href="#" class="forgot-link">Quên mật khẩu?</a>
+                </div>
+
+                <button onclick="login()" class="btn btn-primary">Đăng nhập</button>
+
+                <div class="divider">
+                    <span>hoặc</span>
+                </div>
+
+                <button onclick="showTokenLogin()" class="btn btn-secondary">Đăng nhập bằng token</button>
+            </div>
+        </div>
+
+        <!-- ===== TOKEN LOGIN FORM ===== -->
+        <div id="token-login-form" class="login-wrapper" style="display:none">
+            <div class="login-box">
+                <div class="logo">
+                    <span class="icon">🔑</span>
+                    <h1>Đăng nhập <span>bằng Token</span></h1>
+                    <p>Nhập mã token của bạn để truy cập</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Token của bạn</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🎫</span>
+                        <input type="text" id="token-input" placeholder="Nhập token">
+                    </div>
+                </div>
+
+                <button onclick="loginWithToken()" class="btn btn-primary">Xác nhận</button>
+
+                <div class="back-link">
+                    <button onclick="showLogin()">← Quay lại đăng nhập thường</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== DASHBOARD ===== -->
+        <div id="dashboard" style="display:none">
+            <nav class="navbar">
+                <div class="nav-menu">
+                    <button onclick="showPage('home')" class="nav-btn active">🏠 Trang Chủ</button>
+                    <button onclick="showPage('management')" id="management-tab" class="nav-btn" style="display:none">⚙️ Quản Lí</button>
+                    <button onclick="showPage('settings')" class="nav-btn">🔧 Cài Đặt</button>
+                </div>
+                <div class="user-info">
+                    <span id="current-user"></span>
+                    <span id="user-role" class="badge"></span>
+                </div>
+            </nav>
+            <div id="content">
+                <!-- Pages will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const btn = document.querySelector('.toggle-password');
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
+    </script>
+
+    <!-- Load Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
-    .container {
-        margin: 30px auto;
-        padding: 25px 20px;
-    }
-    
-    .navbar {
-        flex-direction: column;
-        gap: 12px;
-        padding: 15px 20px;
-    }
-    
-    .nav-menu {
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    .nav-btn {
-        padding: 8px 16px;
-        font-size: 13px;
-    }
-    
-    .form-row {
-        flex-direction: column;
-    }
-    
-    .form-row .form-group {
-        margin-bottom: 15px;
-    }
-    
-    .resources {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-    }
-    
-    .page-content {
-        padding: 20px 15px;
-    }
-    
-    .tabs {
-        gap: 5px;
-    }
-    
-    .tab-btn {
-        padding: 8px 14px;
-        font-size: 12px;
-    }
-    
-    .game-controls {
-        gap: 8px;
-    }
-    
-    #snake-canvas {
-        width: 100%;
-        height: auto;
-        aspect-ratio: 1/1;
-    }
-    
-    .score-display {
-        font-size: 16px;
-        gap: 15px;
-        flex-wrap: wrap;
-        justify-content: center;
-    }
-    
-    .modal-content {
-        padding: 25px 20px;
-        margin: 10px;
-    }
-    
-    table {
-        font-size: 12px;
-    }
-    
-    th, td {
-        padding: 10px 12px;
-    }
-}
+    <!-- Load JavaScript files -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/snake.js"></script>
+    <script src="js/admin.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
