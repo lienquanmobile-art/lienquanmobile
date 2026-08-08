@@ -129,7 +129,7 @@ const SnakeGame = {
     if (this.currentAccount && this.currentAccount.role === "user") {
       coinsAwarded = this.score;
       if (coinsAwarded > 0) {
-        await DB.addCoins(this.currentAccount.username, coinsAwarded);
+        await DB.addCoins(this.currentAccount.id, coinsAwarded);
         await DB.addLog(
           this.currentAccount.username,
           "Chơi game Snake",
