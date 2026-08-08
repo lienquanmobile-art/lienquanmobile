@@ -10,34 +10,12 @@ let gameSpeed = 150;
 
 // Initialize snake game
 function initSnakeGame() {
-    const gameContainer = document.getElementById('game-container');
-    if (!gameContainer) return;
-    
-    gameContainer.innerHTML = `
-        <div class="game-container">
-            <div class="score-display">
-                <span>Điểm: <span id="snake-score">0</span></span>
-                <span style="margin-left: 20px;">Xu: <span id="snake-xu">0</span></span>
-            </div>
-            <canvas id="snake-canvas" width="450" height="450"></canvas>
-            <div class="game-controls">
-                <button onclick="startGame()" class="btn btn-primary" id="start-btn">Bắt đầu</button>
-                <button onclick="resetGame()" class="btn btn-danger">Reset</button>
-            </div>
-            <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-                <button onclick="changeDirection('up')" class="btn btn-secondary">↑</button>
-                <button onclick="changeDirection('down')" class="btn btn-secondary">↓</button>
-                <button onclick="changeDirection('left')" class="btn btn-secondary">←</button>
-                <button onclick="changeDirection('right')" class="btn btn-secondary">→</button>
-            </div>
-        </div>
-    `;
-    
     canvas = document.getElementById('snake-canvas');
+    if (!canvas) return;
     ctx = canvas.getContext('2d');
     
     // Keyboard controls
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', function(e) {
         switch(e.key) {
             case 'ArrowUp': changeDirection('up'); e.preventDefault(); break;
             case 'ArrowDown': changeDirection('down'); e.preventDefault(); break;
@@ -77,7 +55,8 @@ function resetGame() {
         gameLoop = null;
     }
     gameRunning = false;
-    document.getElementById('start-btn').textContent = 'Bắt đầu';
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) startBtn.textContent = 'Bắt đầu';
     
     // Reset snake
     snake = [
@@ -88,8 +67,10 @@ function resetGame() {
     direction = 'right';
     nextDirection = 'right';
     score = 0;
-    document.getElementById('snake-score').textContent = '0';
-    document.getElementById('snake-xu').textContent = '0';
+    const scoreEl = document.getElementById('snake-score');
+    const xuEl = document.getElementById('snake-xu');
+    if (scoreEl) scoreEl.textContent = '0';
+    if (xuEl) xuEl.textContent = '0';
     generateFood();
     draw();
 }
@@ -156,7 +137,7 @@ function gameOver() {
     }
     gameRunning = false;
     document.getElementById('start-btn').textContent = 'Bắt đầu';
-    alert(`Game Over! Điểm của bạn: ${score}`);
+    alert('Game Over! Điểm của bạn: ' + score);
     
     // Save xu for user
     if (currentUser && currentUser.role === 'user') {
@@ -165,21 +146,16 @@ function gameOver() {
 }
 
 // Save xu
-async function saveXu(xu) {
-    try {
-        const userRef = ref(db, `users/${currentUser.id}`);
-        const snapshot = await get(userRef);
+function saveXu(xu) {
+    db.ref('users/' + currentUser.id).once('value', function(snapshot) {
         if (snapshot.exists()) {
             const userData = snapshot.val();
             const currentXu = userData.xu || 0;
-            await update(userRef, {
+            db.ref('users/' + currentUser.id).update({
                 xu: currentXu + xu
             });
-            document.getElementById('snake-xu').textContent = xu;
         }
-    } catch (error) {
-        console.error('Save xu error:', error);
-    }
+    });
 }
 
 // Draw game
@@ -201,7 +177,7 @@ function draw() {
     }
     
     // Draw snake
-    snake.forEach((segment, index) => {
+    snake.forEach(function(segment, index) {
         ctx.fillStyle = index === 0 ? '#4ade80' : '#22c55e';
         ctx.shadowColor = '#4ade80';
         ctx.shadowBlur = 10;
@@ -218,6 +194,3 @@ function draw() {
     ctx.fill();
     ctx.shadowBlur = 0;
 }
-
-// Export for dashboard
-export { initSnakeGame };
