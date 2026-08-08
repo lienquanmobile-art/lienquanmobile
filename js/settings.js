@@ -1,61 +1,37 @@
-// js/settings.js
-// Tab "Cài Đặt": đổi mật khẩu + đăng xuất (giống nhau cho mọi loại tài khoản)
+// ===== Cài đặt =====
 
-const Settings = {
-  render(panel, account, onLogout) {
-    panel.innerHTML = `
-      <h3>Đổi mật khẩu</h3>
-      <div class="field-group">
-        <label>Mật khẩu cũ</label>
-        <input id="old-pass" type="password" />
-      </div>
-      <div class="field-group">
-        <label>Mật khẩu mới</label>
-        <input id="new-pass" type="password" />
-      </div>
-      <div class="field-group">
-        <label>Xác nhận lại mật khẩu mới</label>
-        <input id="confirm-pass" type="password" />
-      </div>
-      <button class="btn primary" id="btn-change-pass">Đổi mật khẩu</button>
-      <div id="change-pass-result" class="result-box"></div>
+function renderSettingsTab(container) {
+  container.innerHTML = `
+    <h3 class="neon-title-sm">Đổi mật khẩu</h3>
+    <div class="form-row"><label>Mật khẩu cũ</label><input id="oldPass" type="password" class="neon-input"></div>
+    <div class="form-row"><label>Mật khẩu mới</label><input id="newPass" type="password" class="neon-input"></div>
+    <div class="form-row"><label>Xác nhận lại mật khẩu mới</label><input id="confirmPass" type="password" class="neon-input"></div>
+    <button class="neon-btn" id="changePassBtn">Đổi mật khẩu</button>
+    <div id="changePassResult" class="result-box"></div>
+    <hr class="neon-hr">
+    <button class="neon-btn danger" id="logoutBtn">Đăng xuất khỏi tài khoản</button>
+  `;
 
-      <hr class="divider" />
-      <button class="btn danger" id="btn-logout">Đăng xuất khỏi tài khoản</button>
-    `;
+  container.querySelector("#changePassBtn").onclick = async () => {
+    const me = getCurrentUser();
+    const oldP = container.querySelector("#oldPass").value;
+    const newP = container.querySelector("#newPass").value;
+    const confP = container.querySelector("#confirmPass").value;
+    if (!oldP || !newP || !confP) { toast("Vui lòng nhập đầy đủ!"); return; }
+    if (newP !== confP) { toast("Xác nhận mật khẩu không khớp!"); return; }
+    const res = await changePassword(me.username, oldP, newP);
+    container.querySelector("#changePassResult").innerHTML = res.ok
+      ? `<p>Đổi mật khẩu thành công!</p>` : `<p>${res.msg}</p>`;
+    if (res.ok) {
+      container.querySelector("#oldPass").value = "";
+      container.querySelector("#newPass").value = "";
+      container.querySelector("#confirmPass").value = "";
+    }
+  };
 
-    panel.querySelector("#btn-change-pass").addEventListener("click", async () => {
-      const resultBox = panel.querySelector("#change-pass-result");
-      const oldPass = panel.querySelector("#old-pass").value;
-      const newPass = panel.querySelector("#new-pass").value;
-      const confirmPass = panel.querySelector("#confirm-pass").value;
-
-      if (!oldPass || !newPass || !confirmPass) {
-        resultBox.innerHTML = `<p class="error">Vui lòng nhập đầy đủ thông tin</p>`;
-        return;
-      }
-      if (newPass !== confirmPass) {
-        resultBox.innerHTML = `<p class="error">Mật khẩu mới xác nhận không khớp</p>`;
-        return;
-      }
-      const fresh = await DB.getUserById(account.id);
-      const oldHash = await Utils.hashPassword(oldPass);
-      if (oldHash !== fresh.password) {
-        resultBox.innerHTML = `<p class="error">Mật khẩu cũ không đúng</p>`;
-        return;
-      }
-      const newHash = await Utils.hashPassword(newPass);
-      await DB.changePassword(account.id, newHash);
-      await DB.addLog(account.username, "Đổi mật khẩu", `${account.username} đã đổi mật khẩu`);
-      resultBox.innerHTML = `<p class="success">Đổi mật khẩu thành công</p>`;
-      panel.querySelector("#old-pass").value = "";
-      panel.querySelector("#new-pass").value = "";
-      panel.querySelector("#confirm-pass").value = "";
-    });
-
-    panel.querySelector("#btn-logout").addEventListener("click", async () => {
-      await Auth.logout();
-      onLogout();
-    });
-  },
-};
+  container.querySelector("#logoutBtn").onclick = async () => {
+    const me = getCurrentUser();
+    await logoutUser(me.username);
+    goToLogin();
+  };
+}
