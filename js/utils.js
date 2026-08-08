@@ -1,90 +1,82 @@
-// js/utils.js
-// Các hàm tiện ích dùng chung cho cả web
+// ===== Tiện ích chung =====
 
-const Utils = {
-  // Băm mật khẩu bằng SHA-256 (không lưu mật khẩu dạng chữ thường trong database)
-  async hashPassword(plain) {
-    const enc = new TextEncoder().encode(plain);
-    const buf = await crypto.subtle.digest("SHA-256", enc);
-    return Array.from(new Uint8Array(buf))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-  },
+function randChars(len, pool) {
+  let s = "";
+  for (let i = 0; i < len; i++) s += pool[Math.floor(Math.random() * pool.length)];
+  return s;
+}
 
-  // Sinh chuỗi số ngẫu nhiên có độ dài "len"
-  randomDigits(len) {
-    let s = "";
-    for (let i = 0; i < len; i++) s += Math.floor(Math.random() * 10);
-    return s;
-  },
+function randAlnum(len) {
+  return randChars(len, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+}
 
-  // Sinh chuỗi chữ + số ngẫu nhiên có độ dài "len" (dùng cho giftcode)
-  randomAlnum(len) {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let s = "";
-    for (let i = 0; i < len; i++) s += chars[Math.floor(Math.random() * chars.length)];
-    return s;
-  },
+function randDigits(len) {
+  return randChars(len, "0123456789");
+}
 
-  // Token tài khoản: 20 số, đảm bảo không trùng với token đã có trong "existingTokens" (Set)
-  generateUniqueToken(existingTokens) {
-    let token;
-    do {
-      token = this.randomDigits(20);
-    } while (existingTokens.has(token));
-    return token;
-  },
+// Sinh token 20 ký tự không trùng với bất kỳ token nào đã tồn tại trong DB
+async function genUniqueToken() {
+  while (true) {
+    const t = randAlnum(20);
+    const snap = await db.ref("tokens/" + t).get();
+    if (!snap.exists()) return t;
+  }
+}
 
-  // Mã thẻ Onyx: 16 số, không trùng với "existingCodes" (Set)
-  generateUniqueCardCode(existingCodes) {
-    let code;
-    do {
-      code = this.randomDigits(16);
-    } while (existingCodes.has(code));
-    return code;
-  },
+// Sinh mã thẻ 16 số không trùng
+async function genUniqueCardCode() {
+  while (true) {
+    const c = randDigits(16);
+    const snap = await db.ref("cards/" + c).get();
+    if (!snap.exists()) return c;
+  }
+}
 
-  // Giftcode dạng BLACK=<7 ký tự chữ và số>, không trùng với "existingCodes" (Set)
-  generateUniqueGiftcode(existingCodes) {
-    let code;
-    do {
-      code = "BLACK=" + this.randomAlnum(7);
-    } while (existingCodes.has(code));
-    return code;
-  },
+// Sinh giftcode dạng BLACK=xxxxxxx (7 ký tự) không trùng ở node cho trước
+async function genUniqueGiftcode(node) {
+  while (true) {
+    const code = "BLACK=" + randAlnum(7);
+    const key = code.replace(/[.#$/\[\]]/g, "_");
+    const snap = await db.ref(node + "/" + key).get();
+    if (!snap.exists()) return { code, key };
+  }
+}
 
-  nowTs() {
-    return Date.now();
-  },
+function keyify(str) {
+  return String(str).replace(/[.#$/\[\]]/g, "_");
+}
 
-  formatDateTime(ts) {
-    const d = new Date(ts);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${pad(
-      d.getDate()
-    )}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-  },
+function nowVN() {
+  return new Date().toLocaleString("vi-VN", { hour12: false });
+}
 
-  // Trả về chuỗi đếm ngược dạng DD:HH:MM:SS từ số mili-giây còn lại
-  formatCountdown(msRemaining) {
-    if (msRemaining <= 0) return "00:00:00:00";
-    let totalSec = Math.floor(msRemaining / 1000);
-    const days = Math.floor(totalSec / 86400);
-    totalSec -= days * 86400;
-    const hours = Math.floor(totalSec / 3600);
-    totalSec -= hours * 3600;
-    const mins = Math.floor(totalSec / 60);
-    const secs = totalSec - mins * 60;
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${pad(days)}:${pad(hours)}:${pad(mins)}:${pad(secs)}`;
-  },
+function fmtCountdown(ms) {
+  if (ms <= 0) return "00:00:00";
+  const s = Math.floor(ms / 1000);
+  const days = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  return (days > 0 ? days + "d " : "") + `${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
 
-  escapeHtml(str) {
-    if (str === undefined || str === null) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  },
-};
+async function addLog(text) {
+  await db.ref("logs").push({ text, time: Date.now(), timeStr: nowVN() });
+}
+
+function toast(msg) {
+  const el = document.getElementById("toast");
+  if (!el) { alert(msg); return; }
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+function el(tag, cls, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  return e;
+}
