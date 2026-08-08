@@ -1,6 +1,3 @@
-import { db, ref, set, get, push, update, remove, query, orderByChild, equalTo } from './firebase-config.js';
-import { currentUser, logAction } from './auth.js';
-
 // Generate random token
 function generateToken() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -12,74 +9,78 @@ function generateToken() {
 }
 
 // Check if token exists
-async function isTokenExists(token) {
-    try {
-        const usersRef = ref(db, 'users');
-        const snapshot = await get(usersRef);
+function isTokenExists(token, callback) {
+    const usersRef = db.ref('users');
+    usersRef.once('value', function(snapshot) {
         if (snapshot.exists()) {
             const users = snapshot.val();
             for (let key in users) {
                 if (users[key].token === token) {
-                    return true;
+                    callback(true);
+                    return;
                 }
             }
         }
-        return false;
-    } catch (error) {
-        console.error('Check token error:', error);
-        return true;
-    }
+        callback(false);
+    });
 }
 
 // Generate unique token
-async function generateUniqueToken() {
+function generateUniqueToken(callback) {
     let token;
-    let exists = true;
     let attempts = 0;
-    while (exists && attempts < 100) {
+    function checkToken() {
         token = generateToken();
-        exists = await isTokenExists(token);
-        attempts++;
+        isTokenExists(token, function(exists) {
+            if (!exists || attempts > 100) {
+                callback(token);
+            } else {
+                attempts++;
+                checkToken();
+            }
+        });
     }
-    return token;
+    checkToken();
 }
 
 // Show management tabs
-window.showManagementTab = async function(tab) {
+function showManagementTab(tab) {
     // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+    const buttons = document.querySelectorAll('#management-content ~ .tab-btn');
+    buttons.forEach(function(btn) { btn.classList.remove('active'); });
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
     
     const content = document.getElementById('management-content');
     if (!content) return;
     
     switch(tab) {
         case 'accounts':
-            await showAccounts(content);
+            showAccounts(content);
             break;
         case 'create-account':
-            await showCreateAccount(content);
+            showCreateAccount(content);
             break;
         case 'logs':
-            await showLogs(content);
+            showLogs(content);
             break;
         case 'create-card':
-            await showCreateCard(content);
+            showCreateCard(content);
             break;
         case 'create-giftcode':
-            await showCreateGiftCode(content);
+            showCreateGiftCode(content);
             break;
         case 'ban-account':
-            await showBanAccount(content);
+            showBanAccount(content);
             break;
     }
 }
 
 // Show accounts
-async function showAccounts(content) {
-    try {
-        const usersRef = ref(db, 'users');
-        const snapshot = await get(usersRef);
+function showAccounts(content) {
+    const usersRef = db.ref('users');
+    usersRef.once('value', function(snapshot) {
         let usersHTML = '';
         
         if (snapshot.exists()) {
@@ -112,7 +113,7 @@ async function showAccounts(content) {
                         <tbody>
             `;
             
-            usersList.forEach(user => {
+            usersList.forEach(function(user) {
                 const statusClass = user.banned && user.banned.until > Date.now() ? 'status-banned' : 
                                    user.status === 'online' ? 'status-online' : 'status-offline';
                 const statusText = user.banned && user.banned.until > Date.now() ? 'Bị cấm' :
@@ -142,7 +143,7 @@ async function showAccounts(content) {
                         <tbody>
             `;
             
-            admins.forEach(user => {
+            admins.forEach(function(user) {
                 const statusClass = user.banned && user.banned.until > Date.now() ? 'status-banned' : 
                                    user.status === 'online' ? 'status-online' : 'status-offline';
                 const statusText = user.banned && user.banned.until > Date.now() ? 'Bị cấm' :
@@ -163,14 +164,11 @@ async function showAccounts(content) {
         }
         
         content.innerHTML = usersHTML;
-    } catch (error) {
-        console.error('Show accounts error:', error);
-        content.innerHTML = '<p>Có lỗi xảy ra khi tải danh sách tài khoản</p>';
-    }
+    });
 }
 
 // Show create account
-async function showCreateAccount(content) {
+function showCreateAccount(content) {
     const isOwner = currentUser.role === 'owner';
     const isAdmin = currentUser.role === 'admin';
     
@@ -211,7 +209,7 @@ async function showCreateAccount(content) {
 }
 
 // Create account
-window.createAccount = async function() {
+function createAccount() {
     const role = document.getElementById('account-role').value;
     const username = document.getElementById('new-username').value;
     const password = document.getElementById('new-password').value;
@@ -222,9 +220,8 @@ window.createAccount = async function() {
     }
     
     // Check if username exists
-    try {
-        const usersRef = ref(db, 'users');
-        const snapshot = await get(usersRef);
+    const usersRef = db.ref('users');
+    usersRef.once('value', function(snapshot) {
         if (snapshot.exists()) {
             const users = snapshot.val();
             for (let key in users) {
@@ -236,147 +233,144 @@ window.createAccount = async function() {
         }
         
         // Generate unique token
-        const token = await generateUniqueToken();
-        
-        // Create account
-        const newUserRef = push(ref(db, 'users'));
-        await set(newUserRef, {
-            username: username,
-            password: password,
-            role: role,
-            token: token,
-            status: 'offline',
-            xu: 0,
-            onyx: 0,
-            created: Date.now()
+        generateUniqueToken(function(token) {
+            // Create account
+            const newUserRef = db.ref('users').push();
+            newUserRef.set({
+                username: username,
+                password: password,
+                role: role,
+                token: token,
+                status: 'offline',
+                xu: 0,
+                onyx: 0,
+                created: Date.now()
+            }).then(function() {
+                // Show token
+                document.getElementById('new-token-display').style.display = 'block';
+                document.getElementById('new-token-text').textContent = token;
+                alert('Tạo tài khoản ' + username + ' thành công!');
+            });
         });
-        
-        // Log
-        await logAction(currentUser.id, 'create_account', `Đã tạo tài khoản ${username} (${role})`);
-        
-        // Show token
-        document.getElementById('new-token-display').style.display = 'block';
-        document.getElementById('new-token-text').textContent = token;
-        
-        alert(`Tạo tài khoản ${username} thành công!`);
-        
-    } catch (error) {
-        console.error('Create account error:', error);
-        alert('Có lỗi xảy ra, vui lòng thử lại');
-    }
+    });
 }
 
 // Show logs (Owner only)
-async function showLogs(content) {
+function showLogs(content) {
     if (currentUser.role !== 'owner') {
         content.innerHTML = '<p>Bạn không có quyền truy cập</p>';
         return;
     }
     
-    try {
-        const logsRef = ref(db, 'logs');
-        const snapshot = await get(logsRef);
+    const logsRef = db.ref('logs');
+    logsRef.once('value', function(snapshot) {
         let logsHTML = '<h3>Lịch sử hoạt động</h3>';
         
         if (snapshot.exists()) {
             const logs = snapshot.val();
             const allLogs = [];
+            let processed = 0;
+            let total = 0;
             
             for (let userId in logs) {
                 for (let logId in logs[userId]) {
+                    total++;
                     const log = logs[userId][logId];
-                    // Get user info
-                    const userSnapshot = await get(ref(db, `users/${userId}`));
-                    if (userSnapshot.exists()) {
-                        const user = userSnapshot.val();
-                        allLogs.push({
-                            ...log,
-                            username: user.username,
-                            role: user.role
-                        });
-                    }
+                    db.ref('users/' + userId).once('value', function(userSnapshot) {
+                        if (userSnapshot.exists()) {
+                            const user = userSnapshot.val();
+                            allLogs.push({
+                                ...log,
+                                username: user.username,
+                                role: user.role
+                            });
+                        }
+                        processed++;
+                        if (processed === total) {
+                            // Sort by timestamp descending
+                            allLogs.sort(function(a, b) { return b.timestamp - a.timestamp; });
+                            
+                            logsHTML += `
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Tài khoản</th>
+                                                <th>Hành động</th>
+                                                <th>Thời gian</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                            `;
+                            
+                            allLogs.forEach(function(log) {
+                                const date = new Date(log.timestamp);
+                                logsHTML += `
+                                    <tr>
+                                        <td>${log.username} (${log.role})</td>
+                                        <td>${log.details}</td>
+                                        <td>${date.toLocaleString()}</td>
+                                    </tr>
+                                `;
+                            });
+                            
+                            logsHTML += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                            
+                            // Show tokens
+                            logsHTML += `
+                                <h3 style="margin-top: 30px;">Danh sách Token</h3>
+                                <div class="table-container">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Tài khoản</th>
+                                                <th>Token</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                            `;
+                            
+                            db.ref('users').once('value', function(usersSnapshot) {
+                                if (usersSnapshot.exists()) {
+                                    const users = usersSnapshot.val();
+                                    for (let key in users) {
+                                        logsHTML += `
+                                            <tr>
+                                                <td>${users[key].username}</td>
+                                                <td><code>${users[key].token}</code></td>
+                                            </tr>
+                                        `;
+                                    }
+                                }
+                                logsHTML += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                                `;
+                                content.innerHTML = logsHTML;
+                            });
+                        }
+                    });
                 }
             }
             
-            // Sort by timestamp descending
-            allLogs.sort((a, b) => b.timestamp - a.timestamp);
-            
-            logsHTML += `
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Tài khoản</th>
-                                <th>Hành động</th>
-                                <th>Thời gian</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-            
-            allLogs.forEach(log => {
-                const date = new Date(log.timestamp);
-                logsHTML += `
-                    <tr>
-                        <td>${log.username} (${log.role})</td>
-                        <td>${log.details}</td>
-                        <td>${date.toLocaleString()}</td>
-                    </tr>
-                `;
-            });
-            
-            logsHTML += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
+            if (total === 0) {
+                logsHTML += '<p>Chưa có hoạt động nào</p>';
+                content.innerHTML = logsHTML;
+            }
         } else {
             logsHTML += '<p>Chưa có hoạt động nào</p>';
+            content.innerHTML = logsHTML;
         }
-        
-        // Show tokens
-        logsHTML += `
-            <h3 style="margin-top: 30px;">Danh sách Token</h3>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Tài khoản</th>
-                            <th>Token</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-        
-        const usersRef = ref(db, 'users');
-        const usersSnapshot = await get(usersRef);
-        if (usersSnapshot.exists()) {
-            const users = usersSnapshot.val();
-            for (let key in users) {
-                logsHTML += `
-                    <tr>
-                        <td>${users[key].username}</td>
-                        <td><code>${users[key].token}</code></td>
-                    </tr>
-                `;
-            }
-        }
-        
-        logsHTML += `
-                    </tbody>
-                </table>
-            </div>
-        `;
-        
-        content.innerHTML = logsHTML;
-    } catch (error) {
-        console.error('Show logs error:', error);
-        content.innerHTML = '<p>Có lỗi xảy ra khi tải logs</p>';
-    }
+    });
 }
 
 // Show create card
-async function showCreateCard(content) {
+function showCreateCard(content) {
     content.innerHTML = `
         <h3>Tạo thẻ Onyx</h3>
         <div class="form-group">
@@ -397,12 +391,11 @@ async function showCreateCard(content) {
         <div id="card-history"></div>
     `;
     
-    // Load card history
-    await loadCardHistory();
+    loadCardHistory();
 }
 
 // Create card
-window.createCard = async function() {
+function createCard() {
     const value = parseInt(document.getElementById('card-value').value);
     
     // Generate card code
@@ -411,22 +404,17 @@ window.createCard = async function() {
         cardCode += Math.floor(Math.random() * 10);
     }
     
-    try {
-        const cardRef = push(ref(db, 'cards'));
-        await set(cardRef, {
-            code: cardCode,
-            value: value,
-            created: Date.now(),
-            expiry: Date.now() + (24 * 60 * 60 * 1000), // 24 hours
-            used: false,
-            usedBy: null,
-            usedAt: null,
-            status: 'active'
-        });
-        
-        // Log
-        await logAction(currentUser.id, 'create_card', `Đã tạo thẻ Onyx ${value.toLocaleString()}đ - Mã: ${cardCode}`);
-        
+    const cardRef = db.ref('cards').push();
+    cardRef.set({
+        code: cardCode,
+        value: value,
+        created: Date.now(),
+        expiry: Date.now() + (24 * 60 * 60 * 1000),
+        used: false,
+        usedBy: null,
+        usedAt: null,
+        status: 'active'
+    }).then(function() {
         // Show result
         const resultDiv = document.getElementById('card-result');
         resultDiv.style.display = 'block';
@@ -439,19 +427,14 @@ window.createCard = async function() {
             </div>
         `;
         
-        // Reload card history
-        await loadCardHistory();
-    } catch (error) {
-        console.error('Create card error:', error);
-        alert('Có lỗi xảy ra, vui lòng thử lại');
-    }
+        loadCardHistory();
+    });
 }
 
 // Load card history
-async function loadCardHistory() {
-    try {
-        const cardsRef = ref(db, 'cards');
-        const snapshot = await get(cardsRef);
+function loadCardHistory() {
+    const cardsRef = db.ref('cards');
+    cardsRef.once('value', function(snapshot) {
         let cardsHTML = '';
         
         if (snapshot.exists()) {
@@ -463,8 +446,8 @@ async function loadCardHistory() {
                 cardList.push(card);
             }
             
-            // Sort: active cards first, then expired/used
-            cardList.sort((a, b) => {
+            // Sort: active cards first
+            cardList.sort(function(a, b) {
                 if (a.status === 'active' && b.status !== 'active') return -1;
                 if (a.status !== 'active' && b.status === 'active') return 1;
                 return 0;
@@ -485,7 +468,7 @@ async function loadCardHistory() {
                         <tbody>
             `;
             
-            cardList.forEach(card => {
+            cardList.forEach(function(card) {
                 let statusText = 'Chưa sử dụng';
                 let statusColor = '#48bb78';
                 
@@ -518,13 +501,11 @@ async function loadCardHistory() {
         }
         
         document.getElementById('card-history').innerHTML = cardsHTML;
-    } catch (error) {
-        console.error('Load card history error:', error);
-    }
+    });
 }
 
 // Show create giftcode
-async function showCreateGiftCode(content) {
+function showCreateGiftCode(content) {
     content.innerHTML = `
         <div class="tabs" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
             <button class="tab-btn active" onclick="showGiftCodeTab('normal')">Giftcode bất kì</button>
@@ -537,9 +518,12 @@ async function showCreateGiftCode(content) {
 }
 
 // Show giftcode tab
-window.showGiftCodeTab = function(tab) {
-    document.querySelectorAll('#giftcode-content ~ .tab-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
+function showGiftCodeTab(tab) {
+    const buttons = document.querySelectorAll('#giftcode-content ~ .tab-btn');
+    buttons.forEach(function(btn) { btn.classList.remove('active'); });
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
     
     const content = document.getElementById('giftcode-content');
     if (tab === 'normal') {
@@ -585,7 +569,7 @@ function getPermanentGiftCodeHTML() {
 }
 
 // Create random giftcode
-window.createRandomGiftCode = async function() {
+function createRandomGiftCode() {
     // Generate random code
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let code = 'BLACK=';
@@ -617,23 +601,18 @@ window.createRandomGiftCode = async function() {
         }
     }
     
-    try {
-        const giftRef = push(ref(db, 'giftcodes'));
-        await set(giftRef, {
-            code: code,
-            type: 'normal',
-            rewardType: selected.type,
-            rewardAmount: selected.amount,
-            created: Date.now(),
-            expiry: Date.now() + (48 * 60 * 60 * 1000), // 48 hours
-            used: false,
-            usedBy: null,
-            permanent: false
-        });
-        
-        // Log
-        await logAction(currentUser.id, 'create_giftcode', `Đã tạo giftcode ${code} (${selected.amount} ${selected.type})`);
-        
+    const giftRef = db.ref('giftcodes').push();
+    giftRef.set({
+        code: code,
+        type: 'normal',
+        rewardType: selected.type,
+        rewardAmount: selected.amount,
+        created: Date.now(),
+        expiry: Date.now() + (48 * 60 * 60 * 1000),
+        used: false,
+        usedBy: null,
+        permanent: false
+    }).then(function() {
         document.getElementById('giftcode-result').innerHTML = `
             <div style="padding: 15px; background: #f0fff4; border: 1px solid #48bb78; border-radius: 5px;">
                 <p><strong>✅ Tạo giftcode thành công</strong></p>
@@ -642,14 +621,11 @@ window.createRandomGiftCode = async function() {
                 <p>Hạn sử dụng: 48 giờ</p>
             </div>
         `;
-    } catch (error) {
-        console.error('Create giftcode error:', error);
-        alert('Có lỗi xảy ra, vui lòng thử lại');
-    }
+    });
 }
 
 // Create permanent giftcode
-window.createPermanentGiftCode = async function() {
+function createPermanentGiftCode() {
     const reward = document.getElementById('giftcode-reward').value;
     const amount = parseInt(document.getElementById('giftcode-amount').value);
     const name = document.getElementById('giftcode-name').value;
@@ -664,10 +640,9 @@ window.createPermanentGiftCode = async function() {
         return;
     }
     
-    try {
-        // Check if code exists
-        const giftRef = ref(db, 'giftcodes');
-        const snapshot = await get(giftRef);
+    // Check if code exists
+    const giftRef = db.ref('giftcodes');
+    giftRef.once('value', function(snapshot) {
         if (snapshot.exists()) {
             const gifts = snapshot.val();
             for (let key in gifts) {
@@ -678,43 +653,35 @@ window.createPermanentGiftCode = async function() {
             }
         }
         
-        const newGiftRef = push(ref(db, 'giftcodes'));
-        await set(newGiftRef, {
+        const newGiftRef = db.ref('giftcodes').push();
+        newGiftRef.set({
             code: name,
             type: 'permanent',
             rewardType: reward,
             rewardAmount: amount,
             created: Date.now(),
-            expiry: null, // No expiry
+            expiry: null,
             used: false,
             usedBy: null,
             permanent: true,
             usedCount: 0
+        }).then(function() {
+            document.getElementById('giftcode-permanent-result').innerHTML = `
+                <div style="padding: 15px; background: #f0fff4; border: 1px solid #48bb78; border-radius: 5px;">
+                    <p><strong>✅ Tạo giftcode vĩnh viễn thành công</strong></p>
+                    <p>Mã giftcode: <strong>${name}</strong></p>
+                    <p>Phần thưởng: ${amount} ${reward}</p>
+                    <p>Hạn sử dụng: Vĩnh viễn</p>
+                </div>
+            `;
         });
-        
-        // Log
-        await logAction(currentUser.id, 'create_giftcode', `Đã tạo giftcode vĩnh viễn ${name} (${amount} ${reward})`);
-        
-        document.getElementById('giftcode-permanent-result').innerHTML = `
-            <div style="padding: 15px; background: #f0fff4; border: 1px solid #48bb78; border-radius: 5px;">
-                <p><strong>✅ Tạo giftcode vĩnh viễn thành công</strong></p>
-                <p>Mã giftcode: <strong>${name}</strong></p>
-                <p>Phần thưởng: ${amount} ${reward}</p>
-                <p>Hạn sử dụng: Vĩnh viễn</p>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Create permanent giftcode error:', error);
-        alert('Có lỗi xảy ra, vui lòng thử lại');
-    }
+    });
 }
 
 // Show ban account
-async function showBanAccount(content) {
-    try {
-        const usersRef = ref(db, 'users');
-        const snapshot = await get(usersRef);
-        
+function showBanAccount(content) {
+    const usersRef = db.ref('users');
+    usersRef.once('value', function(snapshot) {
         let userOptions = '';
         let bannedList = '';
         
@@ -751,7 +718,7 @@ async function showBanAccount(content) {
                     const days = Math.floor(remaining / (24 * 60 * 60 * 1000));
                     const hours = Math.floor((remaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
                     const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
-                    const timeStr = `${days}d ${hours}h ${minutes}m`;
+                    const timeStr = days + 'd ' + hours + 'h ' + minutes + 'm';
                     
                     bannedList += `
                         <tr>
@@ -840,14 +807,11 @@ async function showBanAccount(content) {
             <button onclick="banAccount()" class="btn btn-danger">Cấm</button>
             ${bannedList}
         `;
-    } catch (error) {
-        console.error('Show ban account error:', error);
-        content.innerHTML = '<p>Có lỗi xảy ra</p>';
-    }
+    });
 }
 
 // Ban account
-window.banAccount = async function() {
+function banAccount() {
     const userId = document.getElementById('ban-user').value;
     const token = document.getElementById('ban-token').value;
     const seconds = parseInt(document.getElementById('ban-seconds').value) || 0;
@@ -857,11 +821,12 @@ window.banAccount = async function() {
     const years = parseInt(document.getElementById('ban-years').value) || 0;
     const permanent = document.getElementById('ban-permanent').checked;
     
-    let reason = document.querySelector('input[name="ban-reason"]:checked');
+    let reasonEl = document.querySelector('input[name="ban-reason"]:checked');
     const otherReason = document.getElementById('ban-other-reason').value;
     
+    let reason = reasonEl ? reasonEl.value : '';
     if (otherReason) {
-        reason = { value: otherReason };
+        reason = otherReason;
     }
     
     if (!reason) {
@@ -875,9 +840,7 @@ window.banAccount = async function() {
     }
     
     // Verify token
-    try {
-        const userRef = ref(db, `users/${userId}`);
-        const snapshot = await get(userRef);
+    db.ref('users/' + userId).once('value', function(snapshot) {
         if (!snapshot.exists()) {
             alert('Tài khoản không tồn tại');
             return;
@@ -898,7 +861,7 @@ window.banAccount = async function() {
         // Calculate ban duration
         let duration = 0;
         if (permanent) {
-            duration = 100 * 365 * 24 * 60 * 60 * 1000; // 100 years
+            duration = 100 * 365 * 24 * 60 * 60 * 1000;
         } else {
             duration = 
                 seconds * 1000 +
@@ -914,53 +877,36 @@ window.banAccount = async function() {
         }
         
         // Apply ban
-        await update(ref(db, `users/${userId}`), {
+        db.ref('users/' + userId).update({
             banned: {
-                reason: reason.value,
+                reason: reason,
                 until: Date.now() + duration,
                 bannedBy: currentUser.username,
                 bannedAt: Date.now()
             },
             status: 'banned'
+        }).then(function() {
+            alert('Đã cấm tài khoản ' + user.username + ' thành công!');
+            showManagementTab('ban-account');
         });
-        
-        // Log
-        await logAction(currentUser.id, 'ban_account', `Đã cấm tài khoản ${user.username} với lí do: ${reason.value}`);
-        
-        alert(`Đã cấm tài khoản ${user.username} thành công!`);
-        showManagementTab('ban-account');
-    } catch (error) {
-        console.error('Ban account error:', error);
-        alert('Có lỗi xảy ra, vui lòng thử lại');
-    }
+    });
 }
 
 // Unban account
-window.unbanAccount = async function(userId) {
+function unbanAccount(userId) {
     if (!confirm('Bạn có chắc muốn mở khóa tài khoản này?')) return;
     
-    try {
-        await update(ref(db, `users/${userId}`), {
-            banned: null,
-            status: 'offline'
-        });
-        
-        const snapshot = await get(ref(db, `users/${userId}`));
-        if (snapshot.exists()) {
-            const user = snapshot.val();
-            await logAction(currentUser.id, 'unban_account', `Đã mở khóa tài khoản ${user.username}`);
-        }
-        
+    db.ref('users/' + userId).update({
+        banned: null,
+        status: 'offline'
+    }).then(function() {
         alert('Mở khóa tài khoản thành công!');
         showManagementTab('ban-account');
-    } catch (error) {
-        console.error('Unban account error:', error);
-        alert('Có lỗi xảy ra, vui lòng thử lại');
-    }
+    });
 }
 
 // Redeem card
-window.redeemCard = async function() {
+function redeemCard() {
     const cardCode = document.getElementById('card-code').value;
     
     if (!cardCode || cardCode.length !== 16) {
@@ -968,9 +914,8 @@ window.redeemCard = async function() {
         return;
     }
     
-    try {
-        const cardsRef = ref(db, 'cards');
-        const snapshot = await get(cardsRef);
+    const cardsRef = db.ref('cards');
+    cardsRef.once('value', function(snapshot) {
         let found = false;
         
         if (snapshot.exists()) {
@@ -1004,29 +949,26 @@ window.redeemCard = async function() {
                     const onyxAmount = onyxMap[card.value] || 0;
                     
                     // Update user's Onyx
-                    const userRef = ref(db, `users/${currentUser.id}`);
-                    const userSnapshot = await get(userRef);
-                    if (userSnapshot.exists()) {
-                        const userData = userSnapshot.val();
-                        const currentOnyx = userData.onyx || 0;
-                        await update(userRef, {
-                            onyx: currentOnyx + onyxAmount
-                        });
-                    }
+                    db.ref('users/' + currentUser.id).once('value', function(userSnapshot) {
+                        if (userSnapshot.exists()) {
+                            const userData = userSnapshot.val();
+                            const currentOnyx = userData.onyx || 0;
+                            db.ref('users/' + currentUser.id).update({
+                                onyx: currentOnyx + onyxAmount
+                            });
+                        }
+                    });
                     
                     // Mark card as used
-                    await update(ref(db, `cards/${key}`), {
+                    db.ref('cards/' + key).update({
                         used: true,
                         usedBy: currentUser.username,
                         usedAt: Date.now(),
                         status: 'used'
+                    }).then(function() {
+                        alert('Nạp thẻ thành công! Bạn nhận được ' + onyxAmount + ' Onyx');
+                        closeModal('redeem-modal');
                     });
-                    
-                    // Log
-                    await logAction(currentUser.id, 'redeem_card', `Đã nạp thẻ ${cardCode} (${card.value}đ) - Nhận ${onyxAmount} Onyx`);
-                    
-                    alert(`Nạp thẻ thành công! Bạn nhận được ${onyxAmount} Onyx`);
-                    closeModal('redeem-modal');
                     break;
                 }
             }
@@ -1035,22 +977,58 @@ window.redeemCard = async function() {
         if (!found) {
             alert('Vui lòng nhập thông tin thẻ chính xác');
         }
-    } catch (error) {
-        console.error('Redeem card error:', error);
-        alert('Có lỗi xảy ra, vui lòng thử lại');
+    });
+}
+
+// Close modal
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.remove();
     }
 }
 
+// Show redeem card modal
+function showRedeemCard() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'redeem-modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nạp Onyx</h3>
+                <button class="close-btn" onclick="closeModal('redeem-modal')">×</button>
+            </div>
+            <div class="form-group">
+                <label>Mã thẻ:</label>
+                <input type="text" id="card-code" placeholder="Nhập mã thẻ">
+            </div>
+            <button onclick="redeemCard()" class="btn btn-primary">Nạp</button>
+            <div style="margin-top: 20px;">
+                <h4>Bảng quy đổi:</h4>
+                <ul>
+                    <li>10.000đ = 20 Onyx</li>
+                    <li>20.000đ = 40 Onyx</li>
+                    <li>50.000đ = 102 Onyx</li>
+                    <li>100.000đ = 204 Onyx</li>
+                    <li>200.000đ = 408 Onyx</li>
+                    <li>500.000đ = 1020 Onyx</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
 // Redeem giftcode
-window.redeemGiftCode = async function(code) {
+function redeemGiftCode(code) {
     if (!code) {
         code = prompt('Nhập mã giftcode:');
         if (!code) return;
     }
     
-    try {
-        const giftsRef = ref(db, 'giftcodes');
-        const snapshot = await get(giftsRef);
+    const giftsRef = db.ref('giftcodes');
+    giftsRef.once('value', function(snapshot) {
         let found = false;
         
         if (snapshot.exists()) {
@@ -1079,37 +1057,34 @@ window.redeemGiftCode = async function(code) {
                     }
                     
                     // Apply reward
-                    const userRef = ref(db, `users/${currentUser.id}`);
-                    const userSnapshot = await get(userRef);
-                    if (userSnapshot.exists()) {
-                        const userData = userSnapshot.val();
-                        const field = gift.rewardType === 'xu' ? 'xu' : 'onyx';
-                        const currentAmount = userData[field] || 0;
-                        await update(userRef, {
-                            [field]: currentAmount + gift.rewardAmount
-                        });
-                    }
+                    db.ref('users/' + currentUser.id).once('value', function(userSnapshot) {
+                        if (userSnapshot.exists()) {
+                            const userData = userSnapshot.val();
+                            const field = gift.rewardType === 'xu' ? 'xu' : 'onyx';
+                            const currentAmount = userData[field] || 0;
+                            db.ref('users/' + currentUser.id).update({
+                                [field]: currentAmount + gift.rewardAmount
+                            });
+                        }
+                    });
                     
                     // Update giftcode
                     if (gift.permanent) {
                         const usedBy = gift.usedBy || [];
                         usedBy.push(currentUser.id);
-                        await update(ref(db, `giftcodes/${key}`), {
+                        db.ref('giftcodes/' + key).update({
                             usedBy: usedBy,
                             usedCount: (gift.usedCount || 0) + 1
                         });
                     } else {
-                        await update(ref(db, `giftcodes/${key}`), {
+                        db.ref('giftcodes/' + key).update({
                             used: true,
                             usedBy: currentUser.username,
                             usedAt: Date.now()
                         });
                     }
                     
-                    // Log
-                    await logAction(currentUser.id, 'redeem_giftcode', `Đã nhận giftcode ${code} - ${gift.rewardAmount} ${gift.rewardType}`);
-                    
-                    alert(`Nhận giftcode thành công! Bạn nhận được ${gift.rewardAmount} ${gift.rewardType}`);
+                    alert('Nhận giftcode thành công! Bạn nhận được ' + gift.rewardAmount + ' ' + gift.rewardType);
                     break;
                 }
             }
@@ -1118,8 +1093,5 @@ window.redeemGiftCode = async function(code) {
         if (!found) {
             alert('Mã giftcode không hợp lệ');
         }
-    } catch (error) {
-        console.error('Redeem giftcode error:', error);
-        alert('Có lỗi xảy ra, vui lòng thử lại');
-    }
+    });
 }
