@@ -89,12 +89,23 @@ function renderBanTab(container) {
     if (!reason) { toast("Vui lòng chọn hoặc nhập lý do cấm!"); return; }
 
     const banData = {
-      by: me.username, reason, permanent,
+      by: me.username, 
+      reason, 
+      permanent,
       until: permanent ? null : Date.now() + durationMs,
       createdAt: Date.now()
     };
     await db.ref("bans/" + keyify(target)).set(banData);
     await db.ref("users/" + keyify(target) + "/status").set("offline");
+    
+    // Thêm thông báo ban vào realtime để kích hoạt popup
+    await db.ref("ban_trigger/" + keyify(target)).set({
+      triggered: Date.now(),
+      reason: reason,
+      permanent: permanent,
+      until: permanent ? null : Date.now() + durationMs
+    });
+    
     await addLog(`Tài khoản ${me.role}: "${me.username}" đã cấm tài khoản "${target}" - Lý do: ${reason} lúc ${nowVN()}`);
 
     container.querySelector("#banResult").innerHTML = `<p>Đã cấm tài khoản "${target}" thành công!</p>`;
@@ -127,8 +138,22 @@ async function loadBanList(tbody, me, silent) {
     const tr = el("tr", "", `<td>${username}</td><td>${ban.reason}</td><td>${timeTxt}</td>`);
     const tdBtn = el("td");
     const btn = el("button", "neon-btn small", "Mở khóa");
+    
+    // Chỉ owner mới có thể mở khóa
+    if (me.role !== "owner") {
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+      btn.style.cursor = "not-allowed";
+      btn.title = "Chỉ Owner mới có quyền mở khóa";
+    }
+    
     btn.onclick = async () => {
+      if (me.role !== "owner") {
+        toast("Chỉ Owner mới có quyền mở khóa!");
+        return;
+      }
       await db.ref("bans/" + username).remove();
+      await db.ref("ban_trigger/" + keyify(username)).remove(); // Xóa trigger
       await addLog(`Tài khoản ${me.role}: "${me.username}" đã mở khóa tài khoản "${username}" lúc ${nowVN()}`);
       loadBanList(tbody, me);
     };
