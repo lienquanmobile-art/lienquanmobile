@@ -200,9 +200,9 @@ function showCreateAccount(content) {
             <input type="text" id="new-password" placeholder="Nhập mật khẩu">
         </div>
         <button onclick="createAccount()" class="btn btn-primary">Tạo</button>
-        <div id="new-token-display" style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 5px; display: none;">
+        <div id="new-token-display" style="margin-top: 20px; padding: 15px; background: rgba(102,126,234,0.1); border-radius: 12px; display: none;">
             <strong>Token tài khoản:</strong>
-            <span id="new-token-text"></span>
+            <span id="new-token-text" style="color:#667eea; font-size:18px; font-weight:700;"></span>
         </div>
     `;
 }
@@ -263,8 +263,8 @@ function showLogs(content) {
     
     const logsRef = db.ref('logs');
     logsRef.once('value', function(snapshot) {
-        let logsHTML = '<h3>Lịch sử hoạt động</h3>';
-        logsHTML += '<p><em>Chức năng Log đang được phát triển</em></p>';
+        let logsHTML = '<h3>📜 Lịch sử hoạt động</h3>';
+        logsHTML += '<p style="color:rgba(255,255,255,0.4);">Chức năng Log đang được phát triển</p>';
         content.innerHTML = logsHTML;
     });
 }
@@ -272,7 +272,7 @@ function showLogs(content) {
 // Show create card
 function showCreateCard(content) {
     content.innerHTML = `
-        <h3>Tạo thẻ Onyx</h3>
+        <h3>💳 Tạo thẻ Onyx</h3>
         <div class="form-group">
             <label>Mệnh giá:</label>
             <select id="card-value">
@@ -319,11 +319,11 @@ function createCard() {
         const resultDiv = document.getElementById('card-result');
         resultDiv.style.display = 'block';
         resultDiv.innerHTML = `
-            <div style="padding: 15px; background: #f0fff4; border: 1px solid #48bb78; border-radius: 5px;">
-                <p><strong>✅ Tạo thẻ thành công</strong></p>
-                <p>Thẻ Onyx mệnh giá: ${value.toLocaleString()}đ</p>
-                <p>Mã thẻ: <strong>${cardCode}</strong></p>
-                <p>Thời gian còn lại: 24 giờ</p>
+            <div style="padding: 15px; background: rgba(72,187,120,0.1); border: 1px solid rgba(72,187,120,0.2); border-radius: 12px;">
+                <p style="color:#68d391;"><strong>✅ Tạo thẻ thành công</strong></p>
+                <p style="color:rgba(255,255,255,0.8);">Thẻ Onyx mệnh giá: ${value.toLocaleString()}đ</p>
+                <p style="color:rgba(255,255,255,0.8);">Mã thẻ: <strong style="color:#fff;">${cardCode}</strong></p>
+                <p style="color:rgba(255,255,255,0.5);">Thời gian còn lại: 24 giờ</p>
             </div>
         `;
         
@@ -374,19 +374,19 @@ function loadCardHistory() {
                 
                 if (card.used) {
                     statusText = 'Đã sử dụng';
-                    statusColor = '#a0aec0';
+                    statusColor = 'rgba(255,255,255,0.3)';
                 } else if (card.expiry < Date.now()) {
                     statusText = 'Hết hạn';
-                    statusColor = '#f56565';
+                    statusColor = '#fc8181';
                 }
                 
                 cardsHTML += `
                     <tr>
-                        <td><code>${card.code}</code></td>
+                        <td><code style="color:rgba(255,255,255,0.5);">${card.code}</code></td>
                         <td>${card.value.toLocaleString()}đ</td>
                         <td style="color: ${statusColor};">${statusText}</td>
                         <td>${card.usedBy || '-'}</td>
-                        <td>${new Date(card.expiry).toLocaleString()}</td>
+                        <td style="color:rgba(255,255,255,0.4);">${new Date(card.expiry).toLocaleString()}</td>
                     </tr>
                 `;
             });
@@ -397,7 +397,7 @@ function loadCardHistory() {
                 </div>
             `;
         } else {
-            cardsHTML = '<p>Chưa có thẻ nào được tạo</p>';
+            cardsHTML = '<p style="color:rgba(255,255,255,0.4);">Chưa có thẻ nào được tạo</p>';
         }
         
         document.getElementById('card-history').innerHTML = cardsHTML;
@@ -407,7 +407,7 @@ function loadCardHistory() {
 // Show create giftcode
 function showCreateGiftCode(content) {
     content.innerHTML = `
-        <div class="tabs" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+        <div class="tabs" style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 14px;">
             <button class="tab-btn active" onclick="showGiftCodeTab('normal')">Giftcode bất kì</button>
             <button class="tab-btn" onclick="showGiftCodeTab('permanent')">Giftcode vĩnh viễn</button>
         </div>
@@ -514,11 +514,11 @@ function createRandomGiftCode() {
         permanent: false
     }).then(function() {
         document.getElementById('giftcode-result').innerHTML = `
-            <div style="padding: 15px; background: #f0fff4; border: 1px solid #48bb78; border-radius: 5px;">
-                <p><strong>✅ Tạo giftcode thành công</strong></p>
-                <p>Mã giftcode: <strong>${code}</strong></p>
-                <p>Phần thưởng: ${selected.amount} ${selected.type}</p>
-                <p>Hạn sử dụng: 48 giờ</p>
+            <div style="padding: 15px; background: rgba(72,187,120,0.1); border: 1px solid rgba(72,187,120,0.2); border-radius: 12px;">
+                <p style="color:#68d391;"><strong>✅ Tạo giftcode thành công</strong></p>
+                <p style="color:rgba(255,255,255,0.8);">Mã giftcode: <strong style="color:#fff;">${code}</strong></p>
+                <p style="color:rgba(255,255,255,0.8);">Phần thưởng: ${selected.amount} ${selected.type}</p>
+                <p style="color:rgba(255,255,255,0.5);">Hạn sử dụng: 48 giờ</p>
             </div>
         `;
     });
@@ -567,11 +567,11 @@ function createPermanentGiftCode() {
             usedCount: 0
         }).then(function() {
             document.getElementById('giftcode-permanent-result').innerHTML = `
-                <div style="padding: 15px; background: #f0fff4; border: 1px solid #48bb78; border-radius: 5px;">
-                    <p><strong>✅ Tạo giftcode vĩnh viễn thành công</strong></p>
-                    <p>Mã giftcode: <strong>${name}</strong></p>
-                    <p>Phần thưởng: ${amount} ${reward}</p>
-                    <p>Hạn sử dụng: Vĩnh viễn</p>
+                <div style="padding: 15px; background: rgba(72,187,120,0.1); border: 1px solid rgba(72,187,120,0.2); border-radius: 12px;">
+                    <p style="color:#68d391;"><strong>✅ Tạo giftcode vĩnh viễn thành công</strong></p>
+                    <p style="color:rgba(255,255,255,0.8);">Mã giftcode: <strong style="color:#fff;">${name}</strong></p>
+                    <p style="color:rgba(255,255,255,0.8);">Phần thưởng: ${amount} ${reward}</p>
+                    <p style="color:rgba(255,255,255,0.5);">Hạn sử dụng: Vĩnh viễn</p>
                 </div>
             `;
         });
@@ -624,7 +624,7 @@ function showBanAccount(content) {
                         <tr>
                             <td>${user.username}</td>
                             <td>${timeStr}</td>
-                            <td><button onclick="unbanAccount('${key}')" class="btn btn-primary" style="padding: 5px 10px;">Mở khóa</button></td>
+                            <td><button onclick="unbanAccount('${key}')" class="btn btn-primary" style="padding: 5px 15px; width:auto;">Mở khóa</button></td>
                         </tr>
                     `;
                 }
@@ -638,7 +638,7 @@ function showBanAccount(content) {
         }
         
         content.innerHTML = `
-            <h3>Cấm tài khoản</h3>
+            <h3>🚫 Cấm tài khoản</h3>
             <div class="form-group">
                 <label>Tài khoản bị cấm:</label>
                 <select id="ban-user">
@@ -677,30 +677,30 @@ function showBanAccount(content) {
                     <input type="number" id="ban-years" value="0" min="0">
                 </div>
             </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="ban-permanent">
-                <label for="ban-permanent">Vĩnh Viễn</label>
+            <div class="checkbox-group" style="display:flex; align-items:center; gap:10px; margin:15px 0;">
+                <input type="checkbox" id="ban-permanent" style="width:18px; height:18px; accent-color:#667eea;">
+                <label for="ban-permanent" style="color:rgba(255,255,255,0.7);">Vĩnh Viễn</label>
             </div>
             <div class="reason-group">
-                <label><strong>Lí do cấm:</strong></label>
-                <div class="reason-item">
+                <label style="color:rgba(255,255,255,0.7); font-weight:600;"><strong>Lí do cấm:</strong></label>
+                <div class="reason-item" style="margin:8px 0; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:8px;">
                     <input type="radio" name="ban-reason" value="Dùng APK, phần mềm thứ 3, code độc hại">
-                    <label>Dùng APK, phần mềm thứ 3, code độc hại (Cấm 3 năm)</label>
+                    <label style="color:rgba(255,255,255,0.6);">Dùng APK, phần mềm thứ 3, code độc hại (Cấm 3 năm)</label>
                 </div>
-                <div class="reason-item">
+                <div class="reason-item" style="margin:8px 0; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:8px;">
                     <input type="radio" name="ban-reason" value="Hack mã thẻ, Hack Giftcode, Hack tỉ lệ">
-                    <label>Hack mã thẻ, Hack Giftcode, Hack tỉ lệ (Cấm 3 năm)</label>
+                    <label style="color:rgba(255,255,255,0.6);">Hack mã thẻ, Hack Giftcode, Hack tỉ lệ (Cấm 3 năm)</label>
                 </div>
-                <div class="reason-item">
+                <div class="reason-item" style="margin:8px 0; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:8px;">
                     <input type="radio" name="ban-reason" value="Hack những game có trong web để kiếm xu">
-                    <label>Hack những game có trong web để kiếm xu (Cấm 1 tuần)</label>
+                    <label style="color:rgba(255,255,255,0.6);">Hack những game có trong web để kiếm xu (Cấm 1 tuần)</label>
                 </div>
-                <div class="reason-item">
+                <div class="reason-item" style="margin:8px 0; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:8px;">
                     <input type="radio" name="ban-reason" value="Hack xu, hack Onyx">
-                    <label>Hack xu, hack Onyx (Cấm 1 tuần)</label>
+                    <label style="color:rgba(255,255,255,0.6);">Hack xu, hack Onyx (Cấm 1 tuần)</label>
                 </div>
-                <div class="form-group" style="margin-top: 10px;">
-                    <label>Lí do khác:</label>
+                <div class="form-group" style="margin-top:10px;">
+                    <label style="color:rgba(255,255,255,0.5);">Lí do khác:</label>
                     <input type="text" id="ban-other-reason" placeholder="Nhập lí do khác">
                 </div>
             </div>
@@ -896,7 +896,7 @@ function showRedeemCard() {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Nạp Onyx</h3>
+                <h3>💎 Nạp Onyx</h3>
                 <button class="close-btn" onclick="closeModal('redeem-modal')">×</button>
             </div>
             <div class="form-group">
@@ -905,7 +905,7 @@ function showRedeemCard() {
             </div>
             <button onclick="redeemCard()" class="btn btn-primary">Nạp</button>
             <div style="margin-top: 20px;">
-                <h4>Bảng quy đổi:</h4>
+                <h4 style="color:rgba(255,255,255,0.6); font-size:14px; margin-bottom:10px;">Bảng quy đổi:</h4>
                 <ul>
                     <li>10.000đ = 20 Onyx</li>
                     <li>20.000đ = 40 Onyx</li>
