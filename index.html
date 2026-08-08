@@ -8,39 +8,83 @@
 </head>
 <body>
     <div id="app">
-        <!-- Login Form -->
-        <div id="login-form" class="container">
-            <h2>Đăng Nhập</h2>
-            <div class="form-group">
-                <label>Tên đăng nhập:</label>
-                <input type="text" id="username" placeholder="Nhập tên đăng nhập">
+        <!-- ===== LOGIN FORM ===== -->
+        <div id="login-form" class="login-wrapper">
+            <div class="login-box">
+                <div class="logo">
+                    <span class="icon">🚀</span>
+                    <h1>Đăng nhập <span>Hệ Thống</span></h1>
+                    <p>Quản lý tài khoản an toàn & bảo mật</p>
+                </div>
+
+                <div id="login-alert" class="alert" style="display:none;"></div>
+
+                <div class="form-group">
+                    <label>Tên đăng nhập</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="username" placeholder="Nhập tên đăng nhập">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Mật khẩu</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="password" placeholder="Nhập mật khẩu">
+                        <button class="toggle-password" onclick="togglePassword()">👁️</button>
+                    </div>
+                </div>
+
+                <div class="options-row">
+                    <label class="remember-me">
+                        <input type="checkbox"> Ghi nhớ tôi
+                    </label>
+                    <a href="#" class="forgot-link">Quên mật khẩu?</a>
+                </div>
+
+                <button onclick="login()" class="btn btn-primary">Đăng nhập</button>
+
+                <div class="divider">
+                    <span>hoặc</span>
+                </div>
+
+                <button onclick="showTokenLogin()" class="btn btn-secondary">Đăng nhập bằng token</button>
             </div>
-            <div class="form-group">
-                <label>Mật khẩu:</label>
-                <input type="password" id="password" placeholder="Nhập mật khẩu">
-            </div>
-            <button onclick="login()" class="btn btn-primary">OK</button>
-            <button onclick="showTokenLogin()" class="btn btn-secondary">Đăng nhập bằng token</button>
         </div>
 
-        <!-- Token Login Form -->
-        <div id="token-login-form" class="container" style="display:none">
-            <h2>Đăng Nhập Bằng Token</h2>
-            <div class="form-group">
-                <label>Token của bạn:</label>
-                <input type="text" id="token-input" placeholder="Nhập token">
+        <!-- ===== TOKEN LOGIN FORM ===== -->
+        <div id="token-login-form" class="login-wrapper" style="display:none">
+            <div class="login-box">
+                <div class="logo">
+                    <span class="icon">🔑</span>
+                    <h1>Đăng nhập <span>bằng Token</span></h1>
+                    <p>Nhập mã token của bạn để truy cập</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Token của bạn</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🎫</span>
+                        <input type="text" id="token-input" placeholder="Nhập token">
+                    </div>
+                </div>
+
+                <button onclick="loginWithToken()" class="btn btn-primary">Xác nhận</button>
+
+                <div class="back-link">
+                    <button onclick="showLogin()">← Quay lại đăng nhập thường</button>
+                </div>
             </div>
-            <button onclick="loginWithToken()" class="btn btn-primary">OK</button>
-            <button onclick="showLogin()" class="btn btn-secondary">Quay lại</button>
         </div>
 
-        <!-- Dashboard -->
+        <!-- ===== DASHBOARD ===== -->
         <div id="dashboard" style="display:none">
             <nav class="navbar">
                 <div class="nav-menu">
-                    <button onclick="showPage('home')" class="nav-btn">Trang Chủ</button>
-                    <button onclick="showPage('management')" id="management-tab" class="nav-btn" style="display:none">Quản Lí</button>
-                    <button onclick="showPage('settings')" class="nav-btn">Cài Đặt</button>
+                    <button onclick="showPage('home')" class="nav-btn active">🏠 Trang Chủ</button>
+                    <button onclick="showPage('management')" id="management-tab" class="nav-btn" style="display:none">⚙️ Quản Lí</button>
+                    <button onclick="showPage('settings')" class="nav-btn">🔧 Cài Đặt</button>
                 </div>
                 <div class="user-info">
                     <span id="current-user"></span>
@@ -52,6 +96,21 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Toggle password visibility
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const btn = document.querySelector('.toggle-password');
+            if (input.type === 'password') {
+                input.type = 'text';
+                btn.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                btn.textContent = '👁️';
+            }
+        }
+    </script>
 
     <!-- Load Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
