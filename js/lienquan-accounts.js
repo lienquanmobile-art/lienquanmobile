@@ -77,7 +77,7 @@ async function renderLienQuanTab(container) {
     const newAccount = {
       username: username,
       password: password,
-      status: "Unlock", // Mặc định là Unlock
+      status: "Unlock",
       createdBy: me.username,
       createdAt: Date.now(),
       createdAtStr: nowVN()
@@ -133,11 +133,8 @@ async function loadLienQuanList(container, silent = false) {
     // Tên đăng nhập
     tr.appendChild(el("td", "", acc.username));
     
-    // Mật khẩu (ẩn 1 phần)
-    const displayPass = acc.password.length > 8 
-      ? acc.password.slice(0, 4) + "****" + acc.password.slice(-4)
-      : acc.password;
-    tr.appendChild(el("td", "", displayPass));
+    // Mật khẩu - HIỂN THỊ ĐẦY ĐỦ
+    tr.appendChild(el("td", "", acc.password));
     
     // Trạng thái
     const statusColor = acc.status === "Unlock" ? "#5dff8f" : "#ff4444";
