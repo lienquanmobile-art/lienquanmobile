@@ -179,9 +179,13 @@ function renderManageTab(container) {
         case "cards":
           if (typeof renderCreateCardTab === 'function') {
             renderCreateCardTab(subContent);
+          } else if (typeof window.renderCreateCardTab === 'function') {
+            window.renderCreateCardTab(subContent);
           } else {
             subContent.innerHTML = '<div style="color: #ff4444; padding: 20px;">Lỗi: renderCreateCardTab chưa được định nghĩa. Kiểm tra file cards.js</div>';
             console.error("renderCreateCardTab is not defined");
+            console.log("typeof renderCreateCardTab:", typeof renderCreateCardTab);
+            console.log("typeof window.renderCreateCardTab:", typeof window.renderCreateCardTab);
           }
           break;
         case "giftcode":
