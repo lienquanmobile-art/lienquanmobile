@@ -128,12 +128,16 @@ function renderDashboard() {
 
 function renderBigTab(tabId) {
   const content = document.getElementById("dashContent");
+  if (!content) return;
+  
   if (tabId === "home") return renderHomeTab(content);
   if (tabId === "settings") return renderSettingsTab(content);
   if (tabId === "manage") return renderManageTab(content);
 }
 
 function renderManageTab(container) {
+  if (!container) return;
+  
   const me = getCurrentUser();
   const subTabs = [
     { id: "accounts", label: "Tài Khoản" },
@@ -143,34 +147,57 @@ function renderManageTab(container) {
   subTabs.push({ id: "cards", label: "Tạo thẻ" });
   subTabs.push({ id: "giftcode", label: "Tạo giftcode" });
   subTabs.push({ id: "ban", label: "Cấm tài khoản" });
-  subTabs.push({ id: "lienquan", label: "Tài khoản Liên Quân" }); // Thêm tab mới
+  subTabs.push({ id: "lienquan", label: "Tài khoản Liên Quân" });
 
-  container.innerHTML = `<div class="sub-tabs" id="subTabs"></div><div id="subContent" class="sub-content"></div>`;
+  container.innerHTML = `
+    <div class="sub-tabs" id="subTabs"></div>
+    <div id="subContent" class="sub-content"></div>
+  `;
+  
   const subTabsEl = container.querySelector("#subTabs");
   const subContent = container.querySelector("#subContent");
 
+  if (!subTabsEl || !subContent) return;
+
   const renderSub = (id) => {
-    if (id === "accounts") renderAccountsTab(subContent);
-    if (id === "create") renderCreateAccountTab(subContent);
-    if (id === "log") renderLogTab(subContent);
-    if (id === "cards") renderCreateCardTab(subContent);
-    if (id === "giftcode") renderGiftcodeTab(subContent);
-    if (id === "ban") renderBanTab(subContent);
-    if (id === "lienquan") renderLienQuanTab(subContent); // Thêm hàm render
+    // Xóa nội dung cũ
+    subContent.innerHTML = '<div class="loading">Đang tải...</div>';
+    
+    // Render tab tương ứng
+    setTimeout(() => {
+      if (id === "accounts") renderAccountsTab(subContent);
+      else if (id === "create") renderCreateAccountTab(subContent);
+      else if (id === "log") renderLogTab(subContent);
+      else if (id === "cards") renderCreateCardTab(subContent);
+      else if (id === "giftcode") renderGiftcodeTab(subContent);
+      else if (id === "ban") renderBanTab(subContent);
+      else if (id === "lienquan") renderLienQuanTab(subContent);
+    }, 50);
   };
 
+  // Xóa các tab cũ
+  subTabsEl.innerHTML = "";
+  
   subTabs.forEach((t, i) => {
     const b = el("button", "sub-tab-btn" + (i === 0 ? " active" : ""), t.label);
     b.onclick = () => {
       subTabsEl.querySelectorAll(".sub-tab-btn").forEach(x => x.classList.remove("active"));
       b.classList.add("active");
-      clearInterval(window.__banListInterval);
-      clearInterval(lienquanInterval);
+      // Clear các interval
+      if (window.__banListInterval) {
+        clearInterval(window.__banListInterval);
+        window.__banListInterval = null;
+      }
+      if (window.lienquanInterval) {
+        clearInterval(window.lienquanInterval);
+        window.lienquanInterval = null;
+      }
       renderSub(t.id);
     };
     subTabsEl.appendChild(b);
   });
 
+  // Mặc định hiển thị tab đầu tiên
   renderSub("accounts");
 }
 
