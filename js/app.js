@@ -159,20 +159,39 @@ function renderManageTab(container) {
 
   if (!subTabsEl || !subContent) return;
 
+  // Hàm render tab con
   const renderSub = (id) => {
     // Xóa nội dung cũ
     subContent.innerHTML = '<div class="loading">Đang tải...</div>';
     
     // Render tab tương ứng
     setTimeout(() => {
-      if (id === "accounts") renderAccountsTab(subContent);
-      else if (id === "create") renderCreateAccountTab(subContent);
-      else if (id === "log") renderLogTab(subContent);
-      else if (id === "cards") renderCreateCardTab(subContent);
-      else if (id === "giftcode") renderGiftcodeTab(subContent);
-      else if (id === "ban") renderBanTab(subContent);
-      else if (id === "lienquan") renderLienQuanTab(subContent);
-    }, 50);
+      switch(id) {
+        case "accounts":
+          renderAccountsTab(subContent);
+          break;
+        case "create":
+          renderCreateAccountTab(subContent);
+          break;
+        case "log":
+          renderLogTab(subContent);
+          break;
+        case "cards":
+          renderCreateCardTab(subContent);
+          break;
+        case "giftcode":
+          renderGiftcodeTab(subContent);
+          break;
+        case "ban":
+          renderBanTab(subContent);
+          break;
+        case "lienquan":
+          renderLienQuanTab(subContent);
+          break;
+        default:
+          subContent.innerHTML = '<div class="dim-text">Tab không tồn tại</div>';
+      }
+    }, 100);
   };
 
   // Xóa các tab cũ
@@ -181,8 +200,10 @@ function renderManageTab(container) {
   subTabs.forEach((t, i) => {
     const b = el("button", "sub-tab-btn" + (i === 0 ? " active" : ""), t.label);
     b.onclick = () => {
+      // Xóa active của tất cả tab
       subTabsEl.querySelectorAll(".sub-tab-btn").forEach(x => x.classList.remove("active"));
       b.classList.add("active");
+      
       // Clear các interval
       if (window.__banListInterval) {
         clearInterval(window.__banListInterval);
@@ -192,6 +213,8 @@ function renderManageTab(container) {
         clearInterval(window.lienquanInterval);
         window.lienquanInterval = null;
       }
+      
+      // Render tab được chọn
       renderSub(t.id);
     };
     subTabsEl.appendChild(b);
