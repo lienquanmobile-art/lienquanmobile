@@ -162,10 +162,10 @@ function renderManageTab(container) {
   // Hàm render tab con
   const renderSub = (id) => {
     // Xóa nội dung cũ
-    subContent.innerHTML = '<div class="loading">Đang tải...</div>';
+    subContent.innerHTML = '';
     
     // Render tab tương ứng
-    setTimeout(() => {
+    try {
       switch(id) {
         case "accounts":
           renderAccountsTab(subContent);
@@ -191,7 +191,10 @@ function renderManageTab(container) {
         default:
           subContent.innerHTML = '<div class="dim-text">Tab không tồn tại</div>';
       }
-    }, 100);
+    } catch (error) {
+      console.error("Lỗi render tab:", error);
+      subContent.innerHTML = `<div class="dim-text" style="color: #ff4444;">Lỗi: ${error.message}</div>`;
+    }
   };
 
   // Xóa các tab cũ
