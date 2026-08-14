@@ -143,6 +143,7 @@ function renderManageTab(container) {
   subTabs.push({ id: "cards", label: "Tạo thẻ" });
   subTabs.push({ id: "giftcode", label: "Tạo giftcode" });
   subTabs.push({ id: "ban", label: "Cấm tài khoản" });
+  subTabs.push({ id: "lienquan", label: "Tài khoản Liên Quân" }); // Thêm tab mới
 
   container.innerHTML = `<div class="sub-tabs" id="subTabs"></div><div id="subContent" class="sub-content"></div>`;
   const subTabsEl = container.querySelector("#subTabs");
@@ -155,6 +156,7 @@ function renderManageTab(container) {
     if (id === "cards") renderCreateCardTab(subContent);
     if (id === "giftcode") renderGiftcodeTab(subContent);
     if (id === "ban") renderBanTab(subContent);
+    if (id === "lienquan") renderLienQuanTab(subContent); // Thêm hàm render
   };
 
   subTabs.forEach((t, i) => {
@@ -163,6 +165,7 @@ function renderManageTab(container) {
       subTabsEl.querySelectorAll(".sub-tab-btn").forEach(x => x.classList.remove("active"));
       b.classList.add("active");
       clearInterval(window.__banListInterval);
+      clearInterval(lienquanInterval);
       renderSub(t.id);
     };
     subTabsEl.appendChild(b);
