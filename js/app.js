@@ -60,6 +60,7 @@ function goToLogin() {
       if (res.banned && res.banData) {
         // Tạo popup ban
         showBanPopupLogin(res.banData, res.username);
+        // Xóa message text
         document.getElementById("loginMsg").innerHTML = '';
         return;
       }
@@ -113,10 +114,16 @@ function goToTokenLogin() {
 
 // Hàm hiển thị popup ban khi login
 function showBanPopupLogin(ban, username) {
-  const modal = el("div", "modal-overlay");
-  modal.style.zIndex = "9999";
+  // Kiểm tra nếu đã có popup rồi thì không tạo mới
+  if (document.querySelector('.modal-overlay')) {
+    return;
+  }
   
-  const timeText = ban.permanent ? "VĨNH VIỄN" : fmtCountdown(ban.until - Date.now());
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.style.zIndex = '9999';
+  
+  const timeText = ban.permanent ? 'VĨNH VIỄN' : fmtCountdown(ban.until - Date.now());
   
   modal.innerHTML = `
     <div class="modal-box neon-box" style="max-width: 450px; text-align: center; border-color: #ff4444; box-shadow: 0 0 30px rgba(255,68,68,0.5);">
@@ -133,7 +140,7 @@ function showBanPopupLogin(ban, username) {
         <p style="color: #ffaa00; font-size: 12px;"><b>Người cấm:</b> ${ban.by}</p>
       </div>
       <p style="color: #888; font-size: 12px;">
-        ${ban.permanent ? "Tài khoản đã bị cấm vĩnh viễn" : "Vui lòng đợi hết thời gian cấm để đăng nhập lại"}
+        ${ban.permanent ? 'Tài khoản đã bị cấm vĩnh viễn' : 'Vui lòng đợi hết thời gian cấm để đăng nhập lại'}
       </p>
       <button class="neon-btn danger" id="banPopupLoginClose" style="margin-top: 15px; width: 100%;">
         QUAY LẠI
@@ -143,17 +150,19 @@ function showBanPopupLogin(ban, username) {
   
   document.body.appendChild(modal);
   
-  modal.querySelector("#banPopupLoginClose").onclick = () => {
+  modal.querySelector('#banPopupLoginClose').onclick = function() {
     modal.remove();
     // Xóa input để người dùng nhập lại
-    const loginUser = document.getElementById("loginUser");
-    const loginPass = document.getElementById("loginPass");
-    if (loginUser) loginUser.value = "";
-    if (loginPass) loginPass.value = "";
+    const loginUser = document.getElementById('loginUser');
+    const loginPass = document.getElementById('loginPass');
+    const loginToken = document.getElementById('loginTokenInput');
+    if (loginUser) loginUser.value = '';
+    if (loginPass) loginPass.value = '';
+    if (loginToken) loginToken.value = '';
   };
   
   // Không cho phép tắt bằng click ra ngoài
-  modal.onclick = (e) => {
+  modal.onclick = function(e) {
     if (e.target === modal) return;
   };
 }
