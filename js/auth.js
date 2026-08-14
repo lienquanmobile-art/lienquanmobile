@@ -52,8 +52,14 @@ async function loginWithPassword(username, password) {
   }
   const ban = await checkBanStatus(username);
   if (ban) {
-    const timeTxt = ban.permanent ? "vĩnh viễn" : fmtCountdown(ban.until - Date.now()) + " còn lại";
-    return { ok: false, msg: "Tài khoản đang bị cấm (" + timeTxt + "). Lý do: " + ban.reason };
+    // Trả về thông tin ban để hiển thị popup
+    return { 
+      ok: false, 
+      msg: "Tài khoản đang bị cấm",
+      banned: true,
+      banData: ban,
+      username: username
+    };
   }
   await db.ref("users/" + keyify(username) + "/status").set("online");
   await addLog(`Tài khoản ${user.role}: "${username}" đã đăng nhập lúc ${nowVN()}`);
@@ -69,8 +75,14 @@ async function loginWithToken(token) {
 
   const ban = await checkBanStatus(username);
   if (ban) {
-    const timeTxt = ban.permanent ? "vĩnh viễn" : fmtCountdown(ban.until - Date.now()) + " còn lại";
-    return { ok: false, msg: "Tài khoản đang bị cấm (" + timeTxt + "). Lý do: " + ban.reason };
+    // Trả về thông tin ban để hiển thị popup
+    return { 
+      ok: false, 
+      msg: "Tài khoản đang bị cấm",
+      banned: true,
+      banData: ban,
+      username: username
+    };
   }
 
   await db.ref("users/" + keyify(username) + "/status").set("online");
