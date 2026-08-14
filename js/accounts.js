@@ -1,12 +1,11 @@
 // ===== Quản lí tài khoản (danh sách + tạo tài khoản) =====
 
+let accountsInterval = null;
+
 async function renderAccountsTab(container) {
   container.innerHTML = `<div class="loading">Đang tải...</div>`;
-  const snap = await db.ref("users").get();
-  const all = snap.exists() ? snap.val() : {};
-  const users = Object.values(all).filter(u => u.role === "user");
-  const admins = Object.values(all).filter(u => u.role === "admin");
-
+  
+  // Tạo HTML
   container.innerHTML = `
     <h3 class="neon-title-sm">Quản lí tài khoản User</h3>
     <table class="neon-table">
@@ -20,14 +19,64 @@ async function renderAccountsTab(container) {
     </table>
   `;
 
-  const ub = container.querySelector("#usersTbody");
-  users.forEach(u => {
-    ub.appendChild(el("tr", "", `<td>${u.username}</td><td class="${u.status}">${u.status}</td><td>${u.onyx || 0}</td><td>${u.coins || 0}</td>`));
-  });
-  const ab = container.querySelector("#adminsTbody");
-  admins.forEach(u => {
-    ab.appendChild(el("tr", "", `<td>${u.username}</td><td class="${u.status}">${u.status}</td>`));
-  });
+  // Load dữ liệu lần đầu
+  await loadAccountsData();
+  
+  // Clear interval cũ nếu có
+  if (accountsInterval) {
+    clearInterval(accountsInterval);
+    accountsInterval = null;
+  }
+  
+  // Tạo interval mới, cập nhật mỗi 2 giây
+  accountsInterval = setInterval(async () => {
+    // Kiểm tra xem container có còn trong DOM không
+    if (!document.body.contains(container)) {
+      clearInterval(accountsInterval);
+      accountsInterval = null;
+      return;
+    }
+    await loadAccountsData();
+  }, 2000);
+}
+
+async function loadAccountsData() {
+  try {
+    const snap = await db.ref("users").get();
+    if (!snap.exists()) return;
+    
+    const all = snap.val();
+    const users = Object.values(all).filter(u => u.role === "user");
+    const admins = Object.values(all).filter(u => u.role === "admin" || u.role === "owner");
+    
+    // Cập nhật bảng User
+    const userTbody = document.getElementById("usersTbody");
+    if (userTbody) {
+      userTbody.innerHTML = "";
+      users.forEach(u => {
+        const statusClass = u.status === "online" ? "online" : "offline";
+        const statusText = u.status === "online" ? "🟢 Online" : "🔴 Offline";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${u.username}</td><td class="${statusClass}">${statusText}</td><td>${u.onyx || 0}</td><td>${u.coins || 0}</td>`;
+        userTbody.appendChild(tr);
+      });
+    }
+    
+    // Cập nhật bảng Admin
+    const adminTbody = document.getElementById("adminsTbody");
+    if (adminTbody) {
+      adminTbody.innerHTML = "";
+      admins.forEach(u => {
+        const statusClass = u.status === "online" ? "online" : "offline";
+        const statusText = u.status === "online" ? "🟢 Online" : "🔴 Offline";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${u.username}</td><td class="${statusClass}">${statusText}</td>`;
+        adminTbody.appendChild(tr);
+      });
+    }
+  } catch (error) {
+    console.error("Lỗi load accounts:", error);
+  }
 }
 
 async function renderCreateAccountTab(container) {
@@ -81,5 +130,10 @@ async function renderCreateAccountTab(container) {
       `<p>Tạo tài khoản thành công!</p><p>Token tài khoản: <b class="glow-text">${token}</b></p>`;
     container.querySelector("#newAccUsername").value = "";
     container.querySelector("#newAccPassword").value = "";
+    
+    // Refresh danh sách nếu đang ở tab accounts
+    if (accountsInterval) {
+      await loadAccountsData();
+    }
   };
 }
