@@ -125,29 +125,41 @@ async function loadLienQuanList(container, silent = false) {
 
   tbody.innerHTML = "";
   accounts.forEach((acc, index) => {
-    const tr = el("tr");
+    const tr = document.createElement("tr");
     
     // STT
-    tr.appendChild(el("td", "", String(index + 1)));
+    const td1 = document.createElement("td");
+    td1.textContent = String(index + 1);
+    tr.appendChild(td1);
     
     // Tên đăng nhập
-    tr.appendChild(el("td", "", acc.username));
+    const td2 = document.createElement("td");
+    td2.textContent = acc.username;
+    tr.appendChild(td2);
     
-    // Mật khẩu - HIỂN THỊ ĐẦY ĐỦ
-    tr.appendChild(el("td", "", acc.password));
+    // Mật khẩu - HIỂN THỊ ĐẦY ĐỦ 100%
+    const td3 = document.createElement("td");
+    td3.textContent = acc.password; // Hiển thị nguyên văn mật khẩu
+    tr.appendChild(td3);
     
     // Trạng thái
+    const td4 = document.createElement("td");
     const statusColor = acc.status === "Unlock" ? "#5dff8f" : "#ff4444";
     const statusText = acc.status === "Unlock" ? "🔓 Unlock" : "🔒 Lock";
-    const statusTd = el("td", "", `<span style="color: ${statusColor}; font-weight: bold;">${statusText}</span>`);
-    tr.appendChild(statusTd);
+    td4.innerHTML = `<span style="color: ${statusColor}; font-weight: bold;">${statusText}</span>`;
+    tr.appendChild(td4);
     
     // Người thêm
-    tr.appendChild(el("td", "", acc.createdBy || "Unknown"));
+    const td5 = document.createElement("td");
+    td5.textContent = acc.createdBy || "Unknown";
+    tr.appendChild(td5);
     
     // Thao tác
-    const actionTd = el("td");
-    const toggleBtn = el("button", "neon-btn small", acc.status === "Unlock" ? "🔒 Khóa" : "🔓 Mở khóa");
+    const td6 = document.createElement("td");
+    
+    const toggleBtn = document.createElement("button");
+    toggleBtn.className = "neon-btn small";
+    toggleBtn.textContent = acc.status === "Unlock" ? "🔒 Khóa" : "🔓 Mở khóa";
     toggleBtn.style.marginRight = "5px";
     toggleBtn.onclick = async () => {
       const newStatus = acc.status === "Unlock" ? "Lock" : "Unlock";
@@ -167,11 +179,13 @@ async function loadLienQuanList(container, silent = false) {
         loadLienQuanList(container);
       }
     };
-    actionTd.appendChild(toggleBtn);
+    td6.appendChild(toggleBtn);
     
     // Nút xóa (chỉ owner)
     if (getCurrentUser().role === "owner") {
-      const deleteBtn = el("button", "neon-btn small danger", "🗑️ Xóa");
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "neon-btn small danger";
+      deleteBtn.textContent = "🗑️ Xóa";
       deleteBtn.onclick = async () => {
         if (!confirm(`Bạn có chắc muốn xóa tài khoản Liên Quân "${acc.username}"?`)) return;
         const snapAll = await db.ref("lienquan_accounts").get();
@@ -189,10 +203,10 @@ async function loadLienQuanList(container, silent = false) {
           loadLienQuanList(container);
         }
       };
-      actionTd.appendChild(deleteBtn);
+      td6.appendChild(deleteBtn);
     }
     
-    tr.appendChild(actionTd);
+    tr.appendChild(td6);
     tbody.appendChild(tr);
   });
 }
