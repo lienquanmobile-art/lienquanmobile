@@ -62,7 +62,11 @@ function fmtCountdown(ms) {
 }
 
 async function addLog(text) {
-  await db.ref("logs").push({ text, time: Date.now(), timeStr: nowVN() });
+  try {
+    await db.ref("logs").push({ text, time: Date.now(), timeStr: nowVN() });
+  } catch (error) {
+    console.error("Lỗi addLog:", error);
+  }
 }
 
 function toast(msg) {
