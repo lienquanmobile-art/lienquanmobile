@@ -55,7 +55,17 @@ function goToLogin() {
     const p = document.getElementById("loginPass").value;
     if (!u || !p) { toast("Vui lòng nhập đầy đủ thông tin!"); return; }
     const res = await loginWithPassword(u, p);
-    if (!res.ok) { document.getElementById("loginMsg").innerHTML = `<p>${res.msg}</p>`; return; }
+    if (!res.ok) {
+      // Kiểm tra nếu bị ban thì hiển thị popup
+      if (res.banned && res.banData) {
+        // Tạo popup ban
+        showBanPopupLogin(res.banData, res.username);
+        document.getElementById("loginMsg").innerHTML = '';
+        return;
+      }
+      document.getElementById("loginMsg").innerHTML = `<p>${res.msg}</p>`;
+      return;
+    }
     localStorage.setItem("currentUser", res.user.username);
     setCurrentUser(res.user);
     renderDashboard();
@@ -83,13 +93,69 @@ function goToTokenLogin() {
     const t = document.getElementById("loginTokenInput").value.trim();
     if (!t) { toast("Vui lòng nhập token!"); return; }
     const res = await loginWithToken(t);
-    if (!res.ok) { document.getElementById("tokenMsg").innerHTML = `<p>${res.msg}</p>`; return; }
+    if (!res.ok) {
+      // Kiểm tra nếu bị ban thì hiển thị popup
+      if (res.banned && res.banData) {
+        showBanPopupLogin(res.banData, res.username);
+        document.getElementById("tokenMsg").innerHTML = '';
+        return;
+      }
+      document.getElementById("tokenMsg").innerHTML = `<p>${res.msg}</p>`;
+      return;
+    }
     localStorage.setItem("currentUser", res.user.username);
     setCurrentUser(res.user);
     renderDashboard();
     setTimeout(startBanChecker, 1000);
   };
   document.getElementById("tokenBackBtn").onclick = () => goToLogin();
+}
+
+// Hàm hiển thị popup ban khi login
+function showBanPopupLogin(ban, username) {
+  const modal = el("div", "modal-overlay");
+  modal.style.zIndex = "9999";
+  
+  const timeText = ban.permanent ? "VĨNH VIỄN" : fmtCountdown(ban.until - Date.now());
+  
+  modal.innerHTML = `
+    <div class="modal-box neon-box" style="max-width: 450px; text-align: center; border-color: #ff4444; box-shadow: 0 0 30px rgba(255,68,68,0.5);">
+      <h2 style="color: #ff4444; text-shadow: 0 0 20px #ff4444; font-family: 'Press Start 2P', cursive; font-size: 18px;">
+        ⛔ TÀI KHOẢN ĐÃ BỊ CẤM
+      </h2>
+      <hr style="border-color: #ff4444; margin: 15px 0;">
+      <p style="color: #ff8888; font-size: 15px;">
+        Tài khoản <b style="color: #ff4444;">${username}</b> của bạn đã bị cấm
+      </p>
+      <div style="background: rgba(255,68,68,0.1); border: 1px solid #ff4444; border-radius: 6px; padding: 12px; margin: 12px 0;">
+        <p style="color: #ffaa00; font-size: 14px;"><b>Lý do:</b> ${ban.reason}</p>
+        <p style="color: #ffaa00; font-size: 14px;"><b>Thời gian cấm:</b> ${timeText}</p>
+        <p style="color: #ffaa00; font-size: 12px;"><b>Người cấm:</b> ${ban.by}</p>
+      </div>
+      <p style="color: #888; font-size: 12px;">
+        ${ban.permanent ? "Tài khoản đã bị cấm vĩnh viễn" : "Vui lòng đợi hết thời gian cấm để đăng nhập lại"}
+      </p>
+      <button class="neon-btn danger" id="banPopupLoginClose" style="margin-top: 15px; width: 100%;">
+        QUAY LẠI
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  modal.querySelector("#banPopupLoginClose").onclick = () => {
+    modal.remove();
+    // Xóa input để người dùng nhập lại
+    const loginUser = document.getElementById("loginUser");
+    const loginPass = document.getElementById("loginPass");
+    if (loginUser) loginUser.value = "";
+    if (loginPass) loginPass.value = "";
+  };
+  
+  // Không cho phép tắt bằng click ra ngoài
+  modal.onclick = (e) => {
+    if (e.target === modal) return;
+  };
 }
 
 function renderDashboard() {
