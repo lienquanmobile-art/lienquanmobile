@@ -89,7 +89,7 @@ async function checkBanOnLoad() {
       localStorage.removeItem("currentUser");
       const user = await getUser(savedUsername);
       if (user) {
-        showBanPopup(ban, user);
+        showBanPopupLogin(ban, savedUsername);
       }
     }
   }
