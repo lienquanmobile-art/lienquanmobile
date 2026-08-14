@@ -136,6 +136,10 @@ function renderBigTab(tabId) {
 }
 
 function renderManageTab(container) {
+  console.log("=== renderManageTab được gọi ===");
+  console.log("typeof renderCreateCardTab:", typeof renderCreateCardTab);
+  console.log("typeof window.renderCreateCardTab:", typeof window.renderCreateCardTab);
+  
   if (!container) return;
   
   const me = getCurrentUser();
@@ -161,44 +165,38 @@ function renderManageTab(container) {
 
   // Hàm render tab con
   const renderSub = (id) => {
+    console.log("renderSub: " + id);
+    
     // Xóa nội dung cũ
     subContent.innerHTML = '';
     
     // Render tab tương ứng
     try {
-      switch(id) {
-        case "accounts":
-          renderAccountsTab(subContent);
-          break;
-        case "create":
-          renderCreateAccountTab(subContent);
-          break;
-        case "log":
-          renderLogTab(subContent);
-          break;
-        case "cards":
-          if (typeof renderCreateCardTab === 'function') {
-            renderCreateCardTab(subContent);
-          } else if (typeof window.renderCreateCardTab === 'function') {
-            window.renderCreateCardTab(subContent);
-          } else {
-            subContent.innerHTML = '<div style="color: #ff4444; padding: 20px;">Lỗi: renderCreateCardTab chưa được định nghĩa. Kiểm tra file cards.js</div>';
-            console.error("renderCreateCardTab is not defined");
-            console.log("typeof renderCreateCardTab:", typeof renderCreateCardTab);
-            console.log("typeof window.renderCreateCardTab:", typeof window.renderCreateCardTab);
-          }
-          break;
-        case "giftcode":
-          renderGiftcodeTab(subContent);
-          break;
-        case "ban":
-          renderBanTab(subContent);
-          break;
-        case "lienquan":
-          renderLienQuanTab(subContent);
-          break;
-        default:
-          subContent.innerHTML = '<div class="dim-text">Tab không tồn tại</div>';
+      if (id === "accounts") {
+        renderAccountsTab(subContent);
+      } else if (id === "create") {
+        renderCreateAccountTab(subContent);
+      } else if (id === "log") {
+        renderLogTab(subContent);
+      } else if (id === "cards") {
+        console.log("Đang render tab cards");
+        console.log("typeof renderCreateCardTab:", typeof renderCreateCardTab);
+        
+        // Kiểm tra và gọi hàm
+        if (typeof renderCreateCardTab === 'function') {
+          renderCreateCardTab(subContent);
+        } else {
+          subContent.innerHTML = '<div style="color: #ff4444; padding: 20px;">Lỗi: renderCreateCardTab không phải là function. Type: ' + typeof renderCreateCardTab + '</div>';
+          console.error("renderCreateCardTab không phải là function");
+        }
+      } else if (id === "giftcode") {
+        renderGiftcodeTab(subContent);
+      } else if (id === "ban") {
+        renderBanTab(subContent);
+      } else if (id === "lienquan") {
+        renderLienQuanTab(subContent);
+      } else {
+        subContent.innerHTML = '<div class="dim-text">Tab không tồn tại</div>';
       }
     } catch (error) {
       console.error("Lỗi render tab:", error);
@@ -211,29 +209,35 @@ function renderManageTab(container) {
   
   subTabs.forEach((t, i) => {
     const b = el("button", "sub-tab-btn" + (i === 0 ? " active" : ""), t.label);
-    b.onclick = () => {
-      // Xóa active của tất cả tab
-      subTabsEl.querySelectorAll(".sub-tab-btn").forEach(x => x.classList.remove("active"));
-      b.classList.add("active");
-      
-      // Clear các interval
-      if (window.__banListInterval) {
-        clearInterval(window.__banListInterval);
-        window.__banListInterval = null;
-      }
-      if (window.lienquanInterval) {
-        clearInterval(window.lienquanInterval);
-        window.lienquanInterval = null;
-      }
-      
-      // Render tab được chọn
-      renderSub(t.id);
-    };
+    b.onclick = function(tabId) {
+      return function() {
+        // Xóa active của tất cả tab
+        subTabsEl.querySelectorAll(".sub-tab-btn").forEach(x => x.classList.remove("active"));
+        this.classList.add("active");
+        
+        // Clear các interval
+        if (window.__banListInterval) {
+          clearInterval(window.__banListInterval);
+          window.__banListInterval = null;
+        }
+        if (window.lienquanInterval) {
+          clearInterval(window.lienquanInterval);
+          window.lienquanInterval = null;
+        }
+        
+        // Render tab được chọn
+        renderSub(tabId);
+      };
+    }(t.id);
     subTabsEl.appendChild(b);
   });
 
   // Mặc định hiển thị tab đầu tiên
   renderSub("accounts");
 }
+
+// In ra console để kiểm tra
+console.log("=== app.js đã load xong ===");
+console.log("typeof renderCreateCardTab:", typeof renderCreateCardTab);
 
 window.addEventListener("DOMContentLoaded", initApp);
