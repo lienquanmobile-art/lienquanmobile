@@ -1,5 +1,7 @@
 // ===== Thẻ Onyx =====
 
+console.log("Đang load cards.js...");
+
 const CARD_RATES = {
   10000: 20,
   20000: 40,
@@ -9,7 +11,8 @@ const CARD_RATES = {
   500000: 1020
 };
 
-function renderCreateCardTab(container) {
+// Định nghĩa hàm renderCreateCardTab
+window.renderCreateCardTab = function(container) {
   console.log("renderCreateCardTab được gọi");
   
   if (!container) {
@@ -70,7 +73,7 @@ function renderCreateCardTab(container) {
     console.error("Lỗi trong renderCreateCardTab:", error);
     container.innerHTML = '<div style="color: #ff4444; padding: 20px;">Lỗi: ' + error.message + '</div>';
   }
-}
+};
 
 async function handleCreateCard() {
   try {
@@ -204,3 +207,4 @@ async function redeemCard(code) {
 }
 
 console.log("cards.js đã được load thành công!");
+console.log("renderCreateCardTab đã được định nghĩa:", typeof window.renderCreateCardTab);
