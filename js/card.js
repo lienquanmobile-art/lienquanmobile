@@ -1,7 +1,12 @@
 // ===== Thẻ Onyx =====
 
 const CARD_RATES = {
-  10000: 20, 20000: 40, 50000: 102, 100000: 204, 200000: 408, 500000: 1020
+  10000: 20, 
+  20000: 40, 
+  50000: 102, 
+  100000: 204, 
+  200000: 408, 
+  500000: 1020
 };
 
 function renderCreateCardTab(container) {
@@ -56,7 +61,14 @@ function renderCreateCardTab(container) {
           const me = getCurrentUser();
           
           await db.ref("cards/" + code).set({
-            code, value, onyx, createdAt, expiresAt, used: false, usedBy: null, createdBy: me.username
+            code: code,
+            value: value,
+            onyx: onyx,
+            createdAt: createdAt,
+            expiresAt: expiresAt,
+            used: false,
+            usedBy: null,
+            createdBy: me.username
           });
           
           await addLog(`Tài khoản ${me.role}: "${me.username}" đã tạo thẻ Onyx mệnh giá ${value.toLocaleString("vi-VN")}đ - Mã: ${code} lúc ${nowVN()}`);
@@ -64,7 +76,7 @@ function renderCreateCardTab(container) {
           const resultDiv = document.getElementById("createCardResult");
           if (resultDiv) {
             resultDiv.innerHTML = `
-              <p>Tạo thẻ thành công!</p>
+              <p style="color: #5dff8f;">✅ Tạo thẻ thành công!</p>
               <p>Thẻ Onyx mệnh giá: <b>${value.toLocaleString("vi-VN")}đ</b></p>
               <p>Mã thẻ: <b class="glow-text">${code}</b></p>
               <p>Thời gian còn lại: <b>24:00:00</b></p>
@@ -172,3 +184,5 @@ async function redeemCard(code) {
     return { ok: false, msg: "Lỗi hệ thống: " + error.message };
   }
 }
+
+console.log("cards.js đã được load thành công!");
