@@ -29,6 +29,14 @@ async function initApp() {
 }
 
 function goToLogin() {
+  // Xóa khỏi hàng đợi game nếu có
+  const me = getCurrentUser();
+  if (me) {
+    if (typeof WORDCHAIN_QUEUE !== 'undefined') {
+      db.ref(WORDCHAIN_QUEUE + "/" + keyify(me.username)).remove();
+    }
+  }
+  
   setCurrentUser(null);
   if (banCheckInterval) {
     clearInterval(banCheckInterval);
@@ -57,10 +65,8 @@ function goToLogin() {
     const res = await loginWithPassword(u, p);
     if (!res.ok) {
       // Kiểm tra nếu bị ban thì hiển thị popup
-      if (res.banned && res.banData) {
-        // Tạo popup ban
+      if (res.banned === true && res.banData) {
         showBanPopupLogin(res.banData, res.username);
-        // Xóa message text
         document.getElementById("loginMsg").innerHTML = '';
         return;
       }
@@ -96,7 +102,7 @@ function goToTokenLogin() {
     const res = await loginWithToken(t);
     if (!res.ok) {
       // Kiểm tra nếu bị ban thì hiển thị popup
-      if (res.banned && res.banData) {
+      if (res.banned === true && res.banData) {
         showBanPopupLogin(res.banData, res.username);
         document.getElementById("tokenMsg").innerHTML = '';
         return;
@@ -211,8 +217,6 @@ function renderBigTab(tabId) {
 }
 
 function renderManageTab(container) {
-  console.log("=== renderManageTab được gọi ===");
-  
   if (!container) return;
   
   const me = getCurrentUser();
@@ -238,8 +242,6 @@ function renderManageTab(container) {
 
   // Hàm render tab con
   const renderSub = (id) => {
-    console.log("renderSub: " + id);
-    
     // Xóa nội dung cũ
     subContent.innerHTML = '';
     
