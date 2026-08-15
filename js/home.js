@@ -1,6 +1,10 @@
 // ===== Trang chủ =====
 
+console.log("=== home.js đang được load ===");
+
 async function renderHomeTab(container) {
+  console.log("renderHomeTab được gọi");
+  
   const me = getCurrentUser();
   container.innerHTML = `
     <div class="home-hud">
@@ -15,17 +19,49 @@ async function renderHomeTab(container) {
   `;
 
   // Game rắn
-  renderSnakeCard(container.querySelector("#gameList"));
+  if (typeof renderSnakeCard === 'function') {
+    renderSnakeCard(container.querySelector("#gameList"));
+    console.log("Đã render game Rắn");
+  } else {
+    console.error("renderSnakeCard không tồn tại!");
+  }
   
   // Game nối từ
-  renderWordChainCard(container.querySelector("#onlineGameList"));
+  if (typeof renderWordChainCard === 'function') {
+    renderWordChainCard(container.querySelector("#onlineGameList"));
+    console.log("Đã render game Nối từ");
+  } else {
+    console.error("renderWordChainCard không tồn tại!");
+    // Thử tạo card tạm
+    const onlineList = container.querySelector("#onlineGameList");
+    if (onlineList) {
+      onlineList.innerHTML = "";
+      const card = document.createElement("div");
+      card.className = "snake-launch-box";
+      card.innerHTML = `<div class="snake-icon">📝</div><div class="snake-label">NỐI TỪ</div>`;
+      card.style.cursor = "pointer";
+      card.onclick = () => {
+        alert("Đang tải game... Vui lòng refresh trang!");
+        openWordChainGame();
+      };
+      onlineList.appendChild(card);
+      console.log("Đã tạo card Nối từ tạm thời");
+    }
+  }
 
-  container.querySelector("#onyxPlus").onclick = () => openOnyxTopup();
-  container.querySelector("#giftcodeBtn").onclick = () => openGiftcodeModal();
+  const plusBtn = container.querySelector("#onyxPlus");
+  if (plusBtn) plusBtn.onclick = () => openOnyxTopup();
+  
+  const giftBtn = container.querySelector("#giftcodeBtn");
+  if (giftBtn) giftBtn.onclick = () => openGiftcodeModal();
+  
+  console.log("renderHomeTab hoàn thành");
 }
 
 async function refreshHomeStats() {
   const me = getCurrentUser();
+  if (!me) return;
+  
   const snap = await db.ref("users/" + keyify(me.username)).get();
   if (!snap.exists()) return;
   const u = snap.val();
@@ -37,7 +73,8 @@ async function refreshHomeStats() {
 }
 
 function openOnyxTopup() {
-  const modal = el("div", "modal-overlay");
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
   modal.innerHTML = `
     <div class="modal-box neon-box">
       <div class="modal-close" id="onyxClose">✕</div>
@@ -62,17 +99,21 @@ function openOnyxTopup() {
   modal.querySelector("#onyxClose").onclick = () => modal.remove();
   modal.querySelector("#onyxSubmitBtn").onclick = async () => {
     const code = modal.querySelector("#onyxCardCode").value.trim();
-    if (!code) return;
+    if (!code) {
+      toast("Vui lòng nhập mã thẻ!");
+      return;
+    }
     const res = await redeemCard(code);
     modal.querySelector("#onyxResult").innerHTML = res.ok
-      ? `<p>Nạp thành công! +${res.onyx} Onyx</p>`
-      : `<p>${res.msg}</p>`;
+      ? `<p style="color: #5dff8f;">✅ Nạp thành công! +${res.onyx} Onyx</p>`
+      : `<p style="color: #ff4444;">❌ ${res.msg}</p>`;
     if (res.ok) refreshHomeStats();
   };
 }
 
 function openGiftcodeModal() {
-  const modal = el("div", "modal-overlay");
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
   modal.innerHTML = `
     <div class="modal-box neon-box">
       <div class="modal-close" id="gcClose">✕</div>
@@ -88,9 +129,16 @@ function openGiftcodeModal() {
   modal.querySelector("#gcClose").onclick = () => modal.remove();
   modal.querySelector("#gcSubmitBtn").onclick = async () => {
     const code = modal.querySelector("#gcInput").value.trim();
-    if (!code) return;
+    if (!code) {
+      toast("Vui lòng nhập giftcode!");
+      return;
+    }
     const res = await redeemGiftcode(code);
-    modal.querySelector("#gcResult").innerHTML = `<p>${res.msg}</p>`;
+    modal.querySelector("#gcResult").innerHTML = res.ok
+      ? `<p style="color: #5dff8f;">✅ ${res.msg}</p>`
+      : `<p style="color: #ff4444;">❌ ${res.msg}</p>`;
     if (res.ok) refreshHomeStats();
   };
 }
+
+console.log("home.js đã được load!");
