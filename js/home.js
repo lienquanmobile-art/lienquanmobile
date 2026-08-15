@@ -1,10 +1,6 @@
 // ===== Trang chủ =====
 
-console.log("=== home.js đang được load ===");
-
 async function renderHomeTab(container) {
-  console.log("renderHomeTab được gọi");
-  
   const me = getCurrentUser();
   container.innerHTML = `
     <div class="home-hud">
@@ -14,54 +10,22 @@ async function renderHomeTab(container) {
     </div>
     <h3 class="neon-title-sm">Game kiếm xu</h3>
     <div id="gameList" class="game-list"></div>
-    <h3 class="neon-title-sm" style="margin-top: 30px;">Game Online</h3>
+    <h3 class="neon-title-sm">Game Online</h3>
     <div id="onlineGameList" class="game-list"></div>
   `;
 
-  // Game rắn
-  if (typeof renderSnakeCard === 'function') {
-    renderSnakeCard(container.querySelector("#gameList"));
-    console.log("Đã render game Rắn");
-  } else {
-    console.error("renderSnakeCard không tồn tại!");
-  }
+  // Render game Snake
+  renderSnakeCard(container.querySelector("#gameList"));
   
-  // Game nối từ
-  if (typeof renderWordChainCard === 'function') {
-    renderWordChainCard(container.querySelector("#onlineGameList"));
-    console.log("Đã render game Nối từ");
-  } else {
-    console.error("renderWordChainCard không tồn tại!");
-    // Thử tạo card tạm
-    const onlineList = container.querySelector("#onlineGameList");
-    if (onlineList) {
-      onlineList.innerHTML = "";
-      const card = document.createElement("div");
-      card.className = "snake-launch-box";
-      card.innerHTML = `<div class="snake-icon">📝</div><div class="snake-label">NỐI TỪ</div>`;
-      card.style.cursor = "pointer";
-      card.onclick = () => {
-        alert("Đang tải game... Vui lòng refresh trang!");
-        openWordChainGame();
-      };
-      onlineList.appendChild(card);
-      console.log("Đã tạo card Nối từ tạm thời");
-    }
-  }
+  // Render game Nối từ
+  renderWordChainCard(container.querySelector("#onlineGameList"));
 
-  const plusBtn = container.querySelector("#onyxPlus");
-  if (plusBtn) plusBtn.onclick = () => openOnyxTopup();
-  
-  const giftBtn = container.querySelector("#giftcodeBtn");
-  if (giftBtn) giftBtn.onclick = () => openGiftcodeModal();
-  
-  console.log("renderHomeTab hoàn thành");
+  container.querySelector("#onyxPlus").onclick = () => openOnyxTopup();
+  container.querySelector("#giftcodeBtn").onclick = () => openGiftcodeModal();
 }
 
 async function refreshHomeStats() {
   const me = getCurrentUser();
-  if (!me) return;
-  
   const snap = await db.ref("users/" + keyify(me.username)).get();
   if (!snap.exists()) return;
   const u = snap.val();
@@ -73,8 +37,7 @@ async function refreshHomeStats() {
 }
 
 function openOnyxTopup() {
-  const modal = document.createElement("div");
-  modal.className = "modal-overlay";
+  const modal = el("div", "modal-overlay");
   modal.innerHTML = `
     <div class="modal-box neon-box">
       <div class="modal-close" id="onyxClose">✕</div>
@@ -99,21 +62,17 @@ function openOnyxTopup() {
   modal.querySelector("#onyxClose").onclick = () => modal.remove();
   modal.querySelector("#onyxSubmitBtn").onclick = async () => {
     const code = modal.querySelector("#onyxCardCode").value.trim();
-    if (!code) {
-      toast("Vui lòng nhập mã thẻ!");
-      return;
-    }
+    if (!code) return;
     const res = await redeemCard(code);
     modal.querySelector("#onyxResult").innerHTML = res.ok
-      ? `<p style="color: #5dff8f;">✅ Nạp thành công! +${res.onyx} Onyx</p>`
-      : `<p style="color: #ff4444;">❌ ${res.msg}</p>`;
+      ? `<p>Nạp thành công! +${res.onyx} Onyx</p>`
+      : `<p>${res.msg}</p>`;
     if (res.ok) refreshHomeStats();
   };
 }
 
 function openGiftcodeModal() {
-  const modal = document.createElement("div");
-  modal.className = "modal-overlay";
+  const modal = el("div", "modal-overlay");
   modal.innerHTML = `
     <div class="modal-box neon-box">
       <div class="modal-close" id="gcClose">✕</div>
@@ -129,16 +88,9 @@ function openGiftcodeModal() {
   modal.querySelector("#gcClose").onclick = () => modal.remove();
   modal.querySelector("#gcSubmitBtn").onclick = async () => {
     const code = modal.querySelector("#gcInput").value.trim();
-    if (!code) {
-      toast("Vui lòng nhập giftcode!");
-      return;
-    }
+    if (!code) return;
     const res = await redeemGiftcode(code);
-    modal.querySelector("#gcResult").innerHTML = res.ok
-      ? `<p style="color: #5dff8f;">✅ ${res.msg}</p>`
-      : `<p style="color: #ff4444;">❌ ${res.msg}</p>`;
+    modal.querySelector("#gcResult").innerHTML = `<p>${res.msg}</p>`;
     if (res.ok) refreshHomeStats();
   };
 }
-
-console.log("home.js đã được load!");
