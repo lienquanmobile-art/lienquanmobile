@@ -10,6 +10,7 @@ function renderWordChainCard(container) {
   card.innerHTML = `<div class="snake-icon">📝</div><div class="snake-label">NỐI TỪ</div>`;
   card.onclick = () => openWordChainGame();
   container.appendChild(card);
+  console.log("Đã render game Nối từ");
 }
 
 function openWordChainGame() {
@@ -134,22 +135,11 @@ async function checkWordChainMatch() {
     wordChainGames[gameId] = gameData;
     
     // Thông báo cho cả 2 người chơi
-    await notifyWordChainPlayers(gameId, player1.username, player2.username);
+    toast(`Đã ghép cặp thành công!`);
+    
+    // Mở game cho cả 2
+    openWordChainGameForPlayers(gameId, player1.username, player2.username);
   }
-}
-
-async function notifyWordChainPlayers(gameId, username1, username2) {
-  // Tìm user1 và user2 trong queue và gửi thông báo
-  // Vì không có realtime, ta sẽ hiển thị trực tiếp cho cả 2
-  
-  // Đóng modal hiện tại của cả 2 (nếu có)
-  // Mở modal mới cho cả 2
-  
-  // Gửi thông báo đến cả 2 người chơi
-  toast(`Đã ghép cặp thành công!`);
-  
-  // Mở game cho cả 2
-  openWordChainGameForPlayers(gameId, username1, username2);
 }
 
 function openWordChainGameForPlayers(gameId, username1, username2) {
@@ -285,19 +275,23 @@ async function handleWordChainSubmit(gameId, username) {
   
   // Cập nhật giao diện cho cả 2 người
   updateWordChainGame(gameId);
-  
-  // Kiểm tra nếu đối thủ đã rời game
-  // (sẽ được xử lý trong hàm checkWordChainGameStatus)
 }
 
 function updateWordChainGame(gameId) {
   const game = wordChainGames[gameId];
   if (!game) return;
   
-  // Cập nhật cho cả 2 người chơi
-  const gameInfo = document.getElementById('wordchainGameInfo');
-  const gamePlay = document.getElementById('wordchainGamePlay');
+  const me = getCurrentUser();
+  if (!me) return;
   
+  // Kiểm tra nếu game đã kết thúc
+  if (game.status === 'finished') {
+    endWordChainGame(gameId);
+    return;
+  }
+  
+  // Cập nhật game info
+  const gameInfo = document.getElementById('wordchainGameInfo');
   if (gameInfo) {
     const p1 = game.player1;
     const p2 = game.player2;
@@ -315,8 +309,10 @@ function updateWordChainGame(gameId) {
     `;
   }
   
+  // Cập nhật game play
+  const gamePlay = document.getElementById('wordchainGamePlay');
   if (gamePlay) {
-    const isMyTurn = game.currentTurn === getCurrentUser().username;
+    const isMyTurn = game.currentTurn === me.username;
     const turnText = isMyTurn ? 'Lượt của bạn' : `Lượt của ${game.currentTurn}`;
     const lastWord = getLastWord(game.currentWord);
     
@@ -340,10 +336,10 @@ function updateWordChainGame(gameId) {
     const input = document.getElementById('wordchainInput');
     
     if (submitBtn && isMyTurn) {
-      submitBtn.onclick = () => handleWordChainSubmit(gameId, getCurrentUser().username);
+      submitBtn.onclick = () => handleWordChainSubmit(gameId, me.username);
       input.onkeypress = (e) => {
         if (e.key === 'Enter') {
-          handleWordChainSubmit(gameId, getCurrentUser().username);
+          handleWordChainSubmit(gameId, me.username);
         }
       };
     }
@@ -454,3 +450,5 @@ function checkWordChainGameStatus() {
 
 // Khởi tạo interval kiểm tra game
 setInterval(checkWordChainGameStatus, 5000);
+
+console.log("game-wordchain.js đã được load!");
