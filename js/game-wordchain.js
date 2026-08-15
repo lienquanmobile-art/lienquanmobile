@@ -4,6 +4,7 @@
 const wordChainGames = {};
 let wordChainQueue = [];
 let wordChainInterval = null;
+let currentGameId = null;
 
 // Hiển thị game trên trang chủ
 function renderWordChainCard(container) {
@@ -102,7 +103,7 @@ function openWordChainGame() {
     document.getElementById("searchStatus").style.display = "block";
     document.getElementById("searchOpponentBtn").disabled = true;
     
-    // Thêm vào hàng đợi
+    // Thêm vào hàng đợi trên Firebase
     const playerData = {
       username: getCurrentUser().username,
       betAmount: betAmount,
@@ -110,16 +111,18 @@ function openWordChainGame() {
       timestamp: Date.now()
     };
     
-    wordChainQueue.push(playerData);
+    // Lưu vào Firebase queue
+    const queueRef = db.ref("wordchain_queue/" + getCurrentUser().username);
+    await queueRef.set(playerData);
     
-    // Kiểm tra ghép cặp
-    matchPlayers();
+    // Lắng nghe queue để ghép cặp
+    listenQueue();
   };
   
   // Hủy tìm kiếm
-  document.getElementById("cancelSearchBtn").onclick = () => {
+  document.getElementById("cancelSearchBtn").onclick = async () => {
     const username = getCurrentUser().username;
-    wordChainQueue = wordChainQueue.filter(p => p.username !== username);
+    await db.ref("wordchain_queue/" + username).remove();
     document.getElementById("searchStatus").style.display = "none";
     document.getElementById("searchOpponentBtn").disabled = false;
     toast("Đã hủy tìm kiếm!");
@@ -149,17 +152,47 @@ function openWordChainGame() {
     document.getElementById("searchOpponentBtn").disabled = false;
     document.getElementById("searchStatus").style.display = "none";
   };
+  
+  // Kiểm tra nếu đang trong game
+  checkExistingGame();
 }
 
-// Hàm ghép cặp người chơi
-async function matchPlayers() {
-  if (wordChainQueue.length < 2) return;
+// Lắng nghe queue để ghép cặp
+function listenQueue() {
+  const queueRef = db.ref("wordchain_queue");
   
-  // Lấy 2 người chơi đầu tiên
-  const player1 = wordChainQueue.shift();
-  const player2 = wordChainQueue.shift();
-  
-  // Tạo game mới
+  queueRef.on("value", async (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
+    
+    const players = Object.values(data);
+    const me = getCurrentUser();
+    
+    // Kiểm tra xem có đủ 2 người chơi không
+    if (players.length >= 2) {
+      // Lấy 2 người chơi đầu tiên
+      const playerKeys = Object.keys(data);
+      const player1Key = playerKeys[0];
+      const player2Key = playerKeys[1];
+      
+      const player1 = data[player1Key];
+      const player2 = data[player2Key];
+      
+      // Kiểm tra nếu có 1 trong 2 là mình
+      if (player1.username === me.username || player2.username === me.username) {
+        // Xóa 2 người chơi khỏi queue
+        await db.ref("wordchain_queue/" + player1Key).remove();
+        await db.ref("wordchain_queue/" + player2Key).remove();
+        
+        // Tạo game
+        createWordChainGame(player1, player2);
+      }
+    }
+  });
+}
+
+// Tạo game mới
+async function createWordChainGame(player1, player2) {
   const gameId = "wc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 6);
   
   // Random từ đầu tiên
@@ -181,41 +214,41 @@ async function matchPlayers() {
     isOver: false,
     winner: null,
     players: {
-      [player1.username]: { isAdminOrOwner: player1.isAdminOrOwner, score: 0 },
-      [player2.username]: { isAdminOrOwner: player2.isAdminOrOwner, score: 0 }
+      [player1.username]: { isAdminOrOwner: player1.isAdminOrOwner, inGame: true },
+      [player2.username]: { isAdminOrOwner: player2.isAdminOrOwner, inGame: true }
     },
     wordHistory: [firstWord],
     createdAt: Date.now()
   };
   
-  // Lưu game
-  wordChainGames[gameId] = gameData;
-  
-  // Lưu vào Firebase để realtime
+  // Lưu game lên Firebase
   await db.ref("wordchain_games/" + gameId).set(gameData);
-  await db.ref("wordchain_games/" + gameId + "/players/" + player1.username + "/inGame").set(true);
-  await db.ref("wordchain_games/" + gameId + "/players/" + player2.username + "/inGame").set(true);
   
-  // Thông báo cho 2 người chơi
+  // Lưu gameId cho người chơi
+  await db.ref("wordchain_players/" + player1.username + "/gameId").set(gameId);
+  await db.ref("wordchain_players/" + player2.username + "/gameId").set(gameId);
+  
+  // Lưu local
+  wordChainGames[gameId] = gameData;
+  currentGameId = gameId;
+  
   toast(`Đã ghép cặp! ${player1.username} vs ${player2.username}`);
   
-  // Mở game cho cả 2
-  openGameForPlayers(gameId, player1.username, player2.username);
+  // Mở game cho người chơi
+  openGameForPlayer(gameId);
 }
 
 // Mở game cho người chơi
-function openGameForPlayers(gameId, p1, p2) {
-  // Kiểm tra xem modal có đang mở không
+function openGameForPlayer(gameId) {
   const modal = document.getElementById("wordChainModal");
   if (!modal) return;
   
   const me = getCurrentUser();
-  const isPlayer = me.username === p1 || me.username === p2;
-  
-  if (!isPlayer) return;
-  
   const game = wordChainGames[gameId];
   if (!game) return;
+  
+  const isPlayer = me.username === game.player1 || me.username === game.player2;
+  if (!isPlayer) return;
   
   const isPlayer1 = me.username === game.player1;
   const opponent = isPlayer1 ? game.player2 : game.player1;
@@ -235,7 +268,7 @@ function openGameForPlayers(gameId, p1, p2) {
   // Cập nhật lượt chơi
   updateWordChainTurn(gameId);
   
-  // Lắng nghe realtime
+  // Lắng nghe realtime game
   listenWordChainGame(gameId);
 }
 
@@ -254,6 +287,7 @@ function listenWordChainGame(gameId) {
     
     // Cập nhật dữ liệu local
     wordChainGames[gameId] = data;
+    currentGameId = gameId;
     
     // Cập nhật giao diện
     if (document.getElementById("wordChainGame").style.display !== "none") {
@@ -267,6 +301,38 @@ function listenWordChainGame(gameId) {
       handleWordChainGameOver(gameId, data.winner);
     }
   });
+}
+
+// Kiểm tra game hiện tại
+async function checkExistingGame() {
+  const me = getCurrentUser();
+  const snap = await db.ref("wordchain_players/" + me.username + "/gameId").get();
+  if (!snap.exists()) return;
+  
+  const gameId = snap.val();
+  const gameSnap = await db.ref("wordchain_games/" + gameId).get();
+  if (!gameSnap.exists()) return;
+  
+  const game = gameSnap.val();
+  wordChainGames[gameId] = game;
+  currentGameId = gameId;
+  
+  const isPlayer = me.username === game.player1 || me.username === game.player2;
+  if (isPlayer && !game.isOver) {
+    // Mở game
+    document.getElementById("wordChainStatus").style.display = "none";
+    document.getElementById("wordChainGame").style.display = "block";
+    
+    document.getElementById("gamePlayers").innerHTML = `
+      ${game.player1} (${game.bet1} xu) vs ${game.player2} (${game.bet2} xu)
+    `;
+    
+    document.getElementById("currentWord").textContent = game.currentWord;
+    document.getElementById("lastWordDisplay").textContent = game.lastWord;
+    
+    updateWordChainTurn(gameId);
+    listenWordChainGame(gameId);
+  }
 }
 
 // Cập nhật lượt chơi
@@ -302,18 +368,15 @@ async function submitWordChainWord() {
     return;
   }
   
-  // Tìm game hiện tại
-  let gameId = null;
-  let game = null;
-  
-  for (const [id, g] of Object.entries(wordChainGames)) {
-    if (!g.isOver && (g.player1 === me.username || g.player2 === me.username)) {
-      gameId = id;
-      game = g;
-      break;
-    }
+  // Lấy gameId từ Firebase
+  const snap = await db.ref("wordchain_players/" + me.username + "/gameId").get();
+  if (!snap.exists()) {
+    toast("Không tìm thấy game!");
+    return;
   }
   
+  const gameId = snap.val();
+  const game = wordChainGames[gameId];
   if (!game) {
     toast("Không tìm thấy game!");
     return;
@@ -408,21 +471,17 @@ async function handleWordChainGameOver(gameId, winner) {
     
     let reward = 0;
     if (myIsAdmin) {
-      // Admin/Owner thắng không nhận gì
       reward = 0;
       document.getElementById("resultDetail").textContent = `Bạn đã thắng ${opponent}! (Admin/Owner không nhận xu)`;
     } else {
       if (oppIsAdmin) {
-        // User thắng Admin/Owner: gấp đôi + 200
         reward = myBet * 2 + 200;
         document.getElementById("resultDetail").textContent = `Bạn thắng ${opponent} (Admin)! Nhận ${reward} xu!`;
       } else {
-        // User thắng User: gấp đôi
         reward = myBet * 2;
         document.getElementById("resultDetail").textContent = `Bạn thắng ${opponent}! Nhận ${reward} xu!`;
       }
       
-      // Cộng xu cho người thắng
       const userRef = db.ref("users/" + keyify(me.username) + "/coins");
       const snap = await userRef.get();
       const cur = snap.exists() ? snap.val() : 0;
@@ -435,7 +494,6 @@ async function handleWordChainGameOver(gameId, winner) {
     if (myIsAdmin) {
       document.getElementById("resultDetail").textContent = `Bạn đã thua ${opponent}! (Admin/Owner không mất xu)`;
     } else {
-      // Trừ xu của người thua
       const userRef = db.ref("users/" + keyify(me.username) + "/coins");
       const snap = await userRef.get();
       const cur = snap.exists() ? snap.val() : 0;
@@ -446,7 +504,11 @@ async function handleWordChainGameOver(gameId, winner) {
   
   // Xóa game khỏi Firebase
   await db.ref("wordchain_games/" + gameId).remove();
+  await db.ref("wordchain_players/" + game.player1 + "/gameId").remove();
+  await db.ref("wordchain_players/" + game.player2 + "/gameId").remove();
+  
   delete wordChainGames[gameId];
+  currentGameId = null;
   
   // Refresh home stats
   refreshHomeStats();
@@ -455,19 +517,18 @@ async function handleWordChainGameOver(gameId, winner) {
 // Thoát game
 async function quitWordChainGame(forceClose = false) {
   const me = getCurrentUser();
-  let gameId = null;
-  let game = null;
   
-  for (const [id, g] of Object.entries(wordChainGames)) {
-    if (!g.isOver && (g.player1 === me.username || g.player2 === me.username)) {
-      gameId = id;
-      game = g;
-      break;
-    }
+  // Lấy gameId từ Firebase
+  const snap = await db.ref("wordchain_players/" + me.username + "/gameId").get();
+  if (!snap.exists()) {
+    if (!forceClose) toast("Không tìm thấy game!");
+    return;
   }
   
-  if (!game) {
-    if (!forceClose) toast("Không tìm thấy game!");
+  const gameId = snap.val();
+  const game = wordChainGames[gameId];
+  if (!game || game.isOver) {
+    if (!forceClose) toast("Game đã kết thúc!");
     return;
   }
   
@@ -486,12 +547,11 @@ async function quitWordChainGame(forceClose = false) {
     winner: opponent
   });
   
-  // Cộng tiền cho người thắng (người không rời)
+  // Trừ tiền người rời nếu là user
   if (!myIsAdmin) {
-    // Trừ tiền người rời
     const userRef = db.ref("users/" + keyify(me.username) + "/coins");
-    const snap = await userRef.get();
-    const cur = snap.exists() ? snap.val() : 0;
+    const snapUser = await userRef.get();
+    const cur = snapUser.exists() ? snapUser.val() : 0;
     await userRef.set(Math.max(0, cur - myBet));
   }
   
@@ -502,35 +562,69 @@ async function quitWordChainGame(forceClose = false) {
   const reward = myBet * 2 + oppBet;
   await oppRef.set(oppCur + reward);
   
-  // Log
+  // Xóa game
+  await db.ref("wordchain_games/" + gameId).remove();
+  await db.ref("wordchain_players/" + game.player1 + "/gameId").remove();
+  await db.ref("wordchain_players/" + game.player2 + "/gameId").remove();
+  
+  delete wordChainGames[gameId];
+  currentGameId = null;
+  
   await addLog(`Tài khoản ${me.role}: "${me.username}" đã rời game nối từ, ${opponent} thắng lúc ${nowVN()}`);
   
   toast(`Bạn đã rời game! ${opponent} thắng.`);
-  
-  // Refresh
   refreshHomeStats();
   
-  // Đóng modal nếu đang mở
+  // Đóng modal
   if (!forceClose) {
     const modal = document.getElementById("wordChainModal");
-    if (modal) modal.remove();
+    if (modal) {
+      // Reset giao diện
+      document.getElementById("wordChainGame").style.display = "none";
+      document.getElementById("wordChainStatus").style.display = "block";
+      document.getElementById("wordChainResult").style.display = "none";
+      document.getElementById("searchOpponentBtn").disabled = false;
+      document.getElementById("searchStatus").style.display = "none";
+    }
   }
 }
 
-// Khởi tạo listener cho queue
+// Khởi tạo listener queue
+let queueListenerStarted = false;
+
 function initWordChainQueueListener() {
-  // Xóa queue cũ mỗi 30 giây
-  setInterval(() => {
-    const now = Date.now();
-    wordChainQueue = wordChainQueue.filter(p => now - p.timestamp < 30000);
-    matchPlayers();
-  }, 5000);
+  if (queueListenerStarted) return;
+  queueListenerStarted = true;
+  
+  // Lắng nghe queue
+  const queueRef = db.ref("wordchain_queue");
+  queueRef.on("value", async (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
+    
+    const players = Object.values(data);
+    
+    if (players.length >= 2) {
+      const playerKeys = Object.keys(data);
+      const player1Key = playerKeys[0];
+      const player2Key = playerKeys[1];
+      
+      const player1 = data[player1Key];
+      const player2 = data[player2Key];
+      
+      // Xóa 2 người chơi khỏi queue
+      await db.ref("wordchain_queue/" + player1Key).remove();
+      await db.ref("wordchain_queue/" + player2Key).remove();
+      
+      // Tạo game
+      createWordChainGame(player1, player2);
+    }
+  });
 }
 
 // Thêm game vào trang chủ
 function renderWordChainOnHome(container) {
-  // Tìm phần game-list
-  const gameList = container.querySelector(".game-list");
+  const gameList = container.querySelector(".online-game-list");
   if (gameList) {
     renderWordChainCard(gameList);
   }
