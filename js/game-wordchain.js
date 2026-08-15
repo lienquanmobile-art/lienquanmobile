@@ -8,6 +8,7 @@ const WORDCHAIN_GAMES = "wordchain_games";
 let currentGameListener = null;
 let currentQueueListener = null;
 let currentGameId = null;
+let isWaitingForOpponent = false;
 
 function renderWordChainCard(container) {
   console.log("renderWordChainCard được gọi");
@@ -80,6 +81,7 @@ function openWordChainGame() {
       currentQueueListener = null;
     }
     currentGameId = null;
+    isWaitingForOpponent = false;
   };
   
   // Hủy tìm kiếm
@@ -242,7 +244,14 @@ function openGame(gameId) {
   
   // Tìm modal hiện tại
   const modal = document.querySelector('.modal-overlay');
-  if (!modal) return;
+  if (!modal) {
+    // Nếu modal bị đóng, mở lại
+    openWordChainGame();
+    setTimeout(() => {
+      openGame(gameId);
+    }, 500);
+    return;
+  }
   
   // Lắng nghe game
   currentGameListener = db.ref(WORDCHAIN_GAMES + "/" + gameId);
@@ -267,6 +276,9 @@ function openGame(gameId) {
       return;
     }
     
+    const player = isPlayer1 ? game.player1 : game.player2;
+    const opponent = isPlayer1 ? game.player2 : game.player1;
+    
     // Cập nhật modal
     const content = modal.querySelector('#wordchainContent');
     const gameArea = modal.querySelector('#wordchainGameArea');
@@ -278,45 +290,24 @@ function openGame(gameId) {
       gameArea.style.display = 'block';
     }
     
-    // Cập nhật game info - HIỂN THỊ ĐÚNG CHO CẢ 2
-    const gameInfo = document.getElementById('wordchainGameInfo');
-    if (gameInfo) {
-      const p1Bet = game.player1.bet > 0 ? game.player1.bet + ' xu' : 'Không cược';
-      const p2Bet = game.player2.bet > 0 ? game.player2.bet + ' xu' : 'Không cược';
-      gameInfo.innerHTML = `
-        <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(0,255,224,0.05); border-radius: 8px; margin-bottom: 10px;">
-          <span style="color: var(--neon-cyan);">${game.player1.username} (${p1Bet})</span>
-          <span style="color: var(--neon-pink);">VS</span>
-          <span style="color: var(--neon-yellow);">${game.player2.username} (${p2Bet})</span>
-        </div>
-        <div style="text-align: center; padding: 10px; background: rgba(255,45,157,0.05); border-radius: 8px; margin-bottom: 10px;">
-          <span style="font-size: 20px; color: var(--neon-yellow);">📝 ${game.currentWord}</span>
-        </div>
-      `;
-    }
-    
-    // Cập nhật game play
-    const gamePlay = document.getElementById('wordchainGamePlay');
-    if (gamePlay) {
-      // Kiểm tra game đã kết thúc
-      if (game.status === 'finished') {
-        const isWinner = game.winner === me.username;
-        
-        // Tính thưởng
-        const player = isPlayer1 ? game.player1 : game.player2;
-        const opponent = isPlayer1 ? game.player2 : game.player1;
-        let rewardText = '';
-        
-        if (isWinner) {
-          let reward = player.bet * 2;
-          if (opponent.role === "admin" || opponent.role === "owner") {
-            reward += 200;
-          }
-          rewardText = reward > 0 ? `<p style="color: var(--neon-yellow);">🎉 Nhận được ${reward} xu!</p>` : '<p style="color: #888;">Không nhận xu (Admin/Owner)</p>';
-        } else {
-          rewardText = player.bet > 0 ? `<p style="color: #ff8888;">Mất ${player.bet} xu</p>` : '<p style="color: #888;">Không mất xu (Admin/Owner)</p>';
+    // KIỂM TRA GAME ĐÃ KẾT THÚC
+    if (game.status === 'finished') {
+      const isWinner = game.winner === me.username;
+      
+      // Tính thưởng
+      let rewardText = '';
+      if (isWinner) {
+        let reward = player.bet * 2;
+        if (opponent.role === "admin" || opponent.role === "owner") {
+          reward += 200;
         }
-        
+        rewardText = reward > 0 ? `<p style="color: var(--neon-yellow);">🎉 Nhận được ${reward} xu!</p>` : '<p style="color: #888;">Không nhận xu (Admin/Owner)</p>';
+      } else {
+        rewardText = player.bet > 0 ? `<p style="color: #ff8888;">Mất ${player.bet} xu</p>` : '<p style="color: #888;">Không mất xu (Admin/Owner)</p>';
+      }
+      
+      const gamePlay = document.getElementById('wordchainGamePlay');
+      if (gamePlay) {
         gamePlay.innerHTML = `
           <div style="text-align: center; padding: 20px;">
             <p style="color: ${isWinner ? '#5dff8f' : '#ff4444'}; font-size: 20px;">
@@ -335,43 +326,87 @@ function openGame(gameId) {
               currentGameListener = null;
             }
             currentGameId = null;
-            // Xóa game khỏi Firebase
+            isWaitingForOpponent = false;
             db.ref(WORDCHAIN_GAMES + "/" + gameId).remove();
           };
         }
-        return;
       }
-      
+      return;
+    }
+    
+    // Cập nhật game info
+    const gameInfo = document.getElementById('wordchainGameInfo');
+    if (gameInfo) {
+      const p1Bet = game.player1.bet > 0 ? game.player1.bet + ' xu' : 'Không cược';
+      const p2Bet = game.player2.bet > 0 ? game.player2.bet + ' xu' : 'Không cược';
+      gameInfo.innerHTML = `
+        <div style="display: flex; justify-content: space-between; padding: 10px; background: rgba(0,255,224,0.05); border-radius: 8px; margin-bottom: 10px;">
+          <span style="color: var(--neon-cyan);">${game.player1.username} (${p1Bet})</span>
+          <span style="color: var(--neon-pink);">VS</span>
+          <span style="color: var(--neon-yellow);">${game.player2.username} (${p2Bet})</span>
+        </div>
+        <div style="text-align: center; padding: 10px; background: rgba(255,45,157,0.05); border-radius: 8px; margin-bottom: 10px;">
+          <span style="font-size: 24px; color: var(--neon-yellow); font-weight: bold;">📝 ${game.currentWord}</span>
+        </div>
+      `;
+    }
+    
+    // Cập nhật game play
+    const gamePlay = document.getElementById('wordchainGamePlay');
+    if (gamePlay) {
       const isMyTurn = game.currentTurn === me.username;
-      const turnText = isMyTurn ? 'Lượt của bạn' : `Lượt của ${game.currentTurn}`;
       const lastWord = getLastWord(game.currentWord);
       
-      gamePlay.innerHTML = `
-        <div style="text-align: center; padding: 10px; margin-bottom: 10px;">
-          <span style="color: ${isMyTurn ? '#5dff8f' : '#ff8888'};">${turnText}</span>
-        </div>
-        <div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;">
-          <span style="color: var(--neon-cyan); font-size: 18px;">${lastWord}</span>
-          <span style="color: #888;">|</span>
-          <input id="wordchainInput" class="neon-input" placeholder="Nhập từ nối..." style="flex: 1; min-width: 150px;" ${!isMyTurn ? 'disabled' : ''}>
-          <button class="neon-btn" id="wordchainSubmitBtn" ${!isMyTurn ? 'disabled' : ''} style="opacity: ${!isMyTurn ? '0.5' : '1'};">
-            OK
-          </button>
-        </div>
-        <div id="wordchainMessage" class="result-box" style="margin-top: 10px;"></div>
-      `;
-      
-      // Gán sự kiện submit
-      const submitBtn = document.getElementById('wordchainSubmitBtn');
-      const input = document.getElementById('wordchainInput');
-      
-      if (submitBtn && isMyTurn) {
+      // Nếu là lượt của mình
+      if (isMyTurn) {
+        // Hiển thị input để nhập từ
+        gamePlay.innerHTML = `
+          <div style="text-align: center; padding: 10px; margin-bottom: 10px;">
+            <span style="color: #5dff8f; font-size: 16px;">🟢 Lượt của bạn</span>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap;">
+            <span style="color: var(--neon-cyan); font-size: 20px; font-weight: bold;">${lastWord}</span>
+            <span style="color: #888; font-size: 20px;">|</span>
+            <input id="wordchainInput" class="neon-input" placeholder="Nhập từ nối..." style="flex: 1; min-width: 150px; font-size: 16px;">
+            <button class="neon-btn" id="wordchainSubmitBtn" style="font-size: 16px;">
+              OK
+            </button>
+          </div>
+          <div id="wordchainMessage" class="result-box" style="margin-top: 10px;"></div>
+        `;
+        
+        // Gán sự kiện submit
+        const submitBtn = document.getElementById('wordchainSubmitBtn');
+        const input = document.getElementById('wordchainInput');
+        
         submitBtn.onclick = () => handleSubmit(gameId, me.username);
         input.onkeypress = (e) => {
           if (e.key === 'Enter') {
             handleSubmit(gameId, me.username);
           }
         };
+        
+        // Focus vào input
+        setTimeout(() => {
+          input.focus();
+        }, 100);
+        
+      } else {
+        // Không phải lượt của mình - hiển thị "Đối thủ đang trả lời"
+        const opponentName = game.currentTurn;
+        gamePlay.innerHTML = `
+          <div style="text-align: center; padding: 20px;">
+            <div style="font-size: 20px; color: var(--neon-cyan); margin-bottom: 10px;">
+              ${game.currentWord}
+            </div>
+            <div style="font-size: 16px; color: #ffaa00;">
+              ⏳ <b>${opponentName}</b> đang trả lời...
+            </div>
+            <div style="margin-top: 10px; font-size: 14px; color: #888;">
+              (Từ cuối: <b style="color: var(--neon-cyan);">${lastWord}</b>)
+            </div>
+          </div>
+        `;
       }
     }
   });
@@ -413,7 +448,15 @@ async function handleSubmit(gameId, username) {
   // Kiểm tra từ nối có hợp lệ không
   const isValid = isValidConnection(game.currentWord, newWord);
   if (!isValid) {
-    toast("Từ nối không hợp lệ hoặc không có trong từ điển!");
+    toast("❌ Từ nối không hợp lệ hoặc không có trong từ điển!");
+    // Hiển thị lỗi trên màn hình
+    const msgDiv = document.getElementById('wordchainMessage');
+    if (msgDiv) {
+      msgDiv.innerHTML = `<p style="color: #ff4444;">❌ Từ nối không hợp lệ!</p>`;
+      setTimeout(() => {
+        msgDiv.innerHTML = '';
+      }, 2000);
+    }
     return;
   }
   
@@ -437,7 +480,7 @@ async function handleSubmit(gameId, username) {
     msgDiv.innerHTML = `<p style="color: #5dff8f;">✅ Đã nối từ thành công!</p>`;
     setTimeout(() => {
       msgDiv.innerHTML = '';
-    }, 2000);
+    }, 1500);
   }
 }
 
