@@ -5,29 +5,39 @@ let snakeState = null;
 let snakeTimer = null;
 
 function renderSnakeCard(container) {
+  console.log("renderSnakeCard được gọi");
+  
+  if (!container) {
+    console.error("container is null");
+    return;
+  }
+  
   container.innerHTML = "";
-  const card = el("div", "snake-launch-box");
+  const card = document.createElement("div");
+  card.className = "snake-launch-box";
   card.innerHTML = `<div class="snake-icon">🐍</div><div class="snake-label">SNAKE</div>`;
   card.onclick = () => openSnakeGame();
   container.appendChild(card);
+  console.log("Đã render game Rắn");
 }
 
 function openSnakeGame() {
-  const modal = el("div", "modal-overlay");
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
   modal.innerHTML = `
     <div class="modal-box neon-box snake-modal">
       <div class="modal-close" id="snakeClose">✕</div>
-      <h2 class="neon-title">RẮN SĂN TÁO</h2>
+      <h2 class="neon-title">🐍 RẮN SĂN TÁO</h2>
       <div class="snake-hud">
         <span>Điểm: <b id="snakeScore">0</b></span>
       </div>
       <canvas id="snakeCanvas" width="450" height="450"></canvas>
       <div class="snake-hint">Dùng phím mũi tên / WASD để điều khiển</div>
       <div id="snakeOverBox" class="snake-over" style="display:none;">
-        <p>GAME OVER</p>
+        <p style="color: #ff4444; font-size: 20px;">💀 GAME OVER</p>
         <p>Điểm số: <b id="snakeFinalScore">0</b></p>
         <p id="snakeCoinMsg"></p>
-        <button class="neon-btn" id="snakeRestart">Chơi lại</button>
+        <button class="neon-btn" id="snakeRestart">🔄 Chơi lại</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -79,7 +89,6 @@ function handleSnakeKey(e) {
   };
   const nd = map[e.key];
   if (!nd) return;
-  // Không cho phép quay đầu 180 độ
   if (nd.x === -d.x && nd.y === -d.y) return;
   snakeState.nextDir = nd;
 }
@@ -91,11 +100,9 @@ function tickSnake() {
   const head = st.body[0];
   const newHead = { x: head.x + st.dir.x, y: head.y + st.dir.y };
 
-  // Đâm tường
   if (newHead.x < 0 || newHead.y < 0 || newHead.x >= SNAKE_GRID || newHead.y >= SNAKE_GRID) {
     return endSnake();
   }
-  // Đâm thân
   if (st.body.some(b => b.x === newHead.x && b.y === newHead.y)) {
     return endSnake();
   }
@@ -120,20 +127,17 @@ function drawSnake() {
   ctx.fillStyle = "#050510";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // lưới
   ctx.strokeStyle = "rgba(0,255,255,0.08)";
   for (let i = 0; i <= SNAKE_GRID; i++) {
     ctx.beginPath(); ctx.moveTo(i * c, 0); ctx.lineTo(i * c, canvas.height); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, i * c); ctx.lineTo(canvas.width, i * c); ctx.stroke();
   }
 
-  // táo
   ctx.fillStyle = "#ff2d55";
   ctx.shadowColor = "#ff2d55";
   ctx.shadowBlur = 12;
   ctx.fillRect(st.apple.x * c + 2, st.apple.y * c + 2, c - 4, c - 4);
 
-  // thân rắn
   ctx.fillStyle = "#00ffe0";
   ctx.shadowColor = "#00ffe0";
   st.body.forEach((b, i) => {
@@ -155,9 +159,11 @@ async function endSnake() {
     const uSnap = await db.ref("users/" + keyify(user.username) + "/coins").get();
     const cur = uSnap.exists() ? uSnap.val() : 0;
     await db.ref("users/" + keyify(user.username) + "/coins").set(cur + snakeState.score);
-    coinMsg.textContent = `Bạn nhận được ${snakeState.score} xu!`;
+    coinMsg.textContent = `🎉 Bạn nhận được ${snakeState.score} xu!`;
     refreshHomeStats();
   } else if (user && user.role !== "user") {
     coinMsg.textContent = "Tài khoản quản lý không nhận xu từ game.";
   }
 }
+
+console.log("game-snake.js đã được load!");
