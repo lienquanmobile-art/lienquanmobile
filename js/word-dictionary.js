@@ -421,6 +421,7 @@ const WORD_DICTIONARY = [
   "đến nơi",
   "nơi đây",
   "đây nhé",
+  "chanh dây",
   "nhé bạn"
 ];
 
