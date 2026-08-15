@@ -10,9 +10,15 @@ async function renderHomeTab(container) {
     </div>
     <h3 class="neon-title-sm">Game kiếm xu</h3>
     <div id="gameList" class="game-list"></div>
+    <h3 class="neon-title-sm" style="margin-top: 30px;">Game Online</h3>
+    <div id="onlineGameList" class="game-list"></div>
   `;
 
+  // Game rắn
   renderSnakeCard(container.querySelector("#gameList"));
+  
+  // Game nối từ
+  renderWordChainCard(container.querySelector("#onlineGameList"));
 
   container.querySelector("#onyxPlus").onclick = () => openOnyxTopup();
   container.querySelector("#giftcodeBtn").onclick = () => openGiftcodeModal();
