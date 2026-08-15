@@ -206,3 +206,5 @@ function isValidConnection(previousWord, newWord) {
 function getRandomWord() {
   return WORD_DICTIONARY[Math.floor(Math.random() * WORD_DICTIONARY.length)];
 }
+
+console.log("word-dictionary.js đã được load! Số từ:", WORD_DICTIONARY.length);
