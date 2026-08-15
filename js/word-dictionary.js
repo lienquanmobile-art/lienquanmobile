@@ -1,7 +1,7 @@
 // ===== Từ điển cho game Nối từ =====
 
 const WORD_DICTIONARY = [
-  // Từ 2 từ
+  // CHỈ LẤY TỪ 2 TỪ
   "ăn uống",
   "ăn cơm",
   "ăn tạp",
@@ -25,11 +25,8 @@ const WORD_DICTIONARY = [
   "cây cối",
   "cây xanh",
   "cây cỏ",
-  "cây ăn quả",
-  "cây công nghiệp",
   "chào hỏi",
   "chào mừng",
-  "chào tạm biệt",
   "chào cờ",
   "chào đón",
   "cơm nước",
@@ -88,7 +85,6 @@ const WORD_DICTIONARY = [
   "nối nghiệp",
   "phim ảnh",
   "phim truyền hình",
-  "phim điện ảnh",
   "phim hoạt hình",
   "phim tài liệu",
   "quả bóng",
@@ -170,7 +166,6 @@ const WORD_DICTIONARY = [
 
 // Hàm kiểm tra từ có tồn tại trong từ điển không
 function isValidWord(word) {
-  // Chuẩn hóa từ (loại bỏ khoảng trắng thừa)
   const normalized = word.trim().toLowerCase();
   return WORD_DICTIONARY.some(w => w.toLowerCase() === normalized);
 }
@@ -185,26 +180,33 @@ function getLastWord(word) {
 function isValidConnection(previousWord, newWord) {
   if (!newWord || !previousWord) return false;
   
-  // Chuẩn hóa
   const prev = previousWord.trim().toLowerCase();
   const newW = newWord.trim().toLowerCase();
   
-  // Kiểm tra từ nối có trong từ điển không
+  // Kiểm tra từ mới có trong từ điển không
   if (!isValidWord(newW)) return false;
+  
+  // Kiểm tra số lượng từ = 2
+  const wordParts = newW.split(/\s+/);
+  if (wordParts.length !== 2) {
+    return false;
+  }
   
   // Lấy từ cuối của từ trước
   const lastWord = getLastWord(prev);
   
   // Lấy từ đầu của từ mới
-  const firstWord = newW.split(/\s+/)[0];
+  const firstWord = wordParts[0];
   
   // Kiểm tra từ đầu của từ mới có khớp với từ cuối của từ trước không
   return lastWord === firstWord;
 }
 
-// Hàm lấy từ ngẫu nhiên
+// Hàm lấy từ ngẫu nhiên (chỉ lấy từ 2 từ)
 function getRandomWord() {
-  return WORD_DICTIONARY[Math.floor(Math.random() * WORD_DICTIONARY.length)];
+  // Lọc chỉ lấy từ có đúng 2 từ
+  const twoWordList = WORD_DICTIONARY.filter(w => w.trim().split(/\s+/).length === 2);
+  return twoWordList[Math.floor(Math.random() * twoWordList.length)];
 }
 
-console.log("word-dictionary.js đã được load! Số từ:", WORD_DICTIONARY.length);
+console.log("word-dictionary.js đã được load! Số từ 2 từ:", WORD_DICTIONARY.filter(w => w.trim().split(/\s+/).length === 2).length);
