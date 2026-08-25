@@ -8,10 +8,46 @@ async function renderHomeTab(container) {
       <span>Số Onyx: <b id="hudOnyx">${me.onyx || 0}</b> <span id="onyxPlus" class="onyx-plus">+</span></span>
       <button class="neon-btn small" id="giftcodeBtn">Nhập Giftcode</button>
     </div>
-    <h3 class="neon-title-sm">Game kiếm xu</h3>
-    <div id="gameList" class="game-list"></div>
-    <h3 class="neon-title-sm">Game Online</h3>
-    <div id="onlineGameList" class="game-list"></div>
+    
+    <!-- Tab Game -->
+    <div class="sub-tabs" id="gameTabs">
+      <button class="sub-tab-btn active" data-tab="games">🎮 Game</button>
+      <button class="sub-tab-btn" data-tab="getkey">🔑 Lấy Key</button>
+    </div>
+    <div id="gameContent" class="sub-content" style="margin-top: 10px;"></div>
+  `;
+
+  // Xử lý chuyển tab
+  const tabs = container.querySelectorAll('#gameTabs .sub-tab-btn');
+  const content = container.querySelector('#gameContent');
+  
+  tabs.forEach(tab => {
+    tab.onclick = () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const tabName = tab.dataset.tab;
+      if (tabName === 'games') {
+        renderGamesTab(content);
+      } else if (tabName === 'getkey') {
+        renderGetKeyTab(content);
+      }
+    };
+  });
+
+  // Mặc định hiển thị tab Game
+  renderGamesTab(content);
+
+  container.querySelector("#onyxPlus").onclick = () => openOnyxTopup();
+  container.querySelector("#giftcodeBtn").onclick = () => openGiftcodeModal();
+}
+
+// Tab Game
+function renderGamesTab(container) {
+  container.innerHTML = `
+    <h3 class="neon-title-sm">🎮 Game kiếm xu</h3>
+    <div class="game-list" id="gameList"></div>
+    <h3 class="neon-title-sm" style="margin-top: 20px;">🌐 Game Online</h3>
+    <div class="game-list" id="onlineGameList"></div>
   `;
 
   // Render game Snake
@@ -19,9 +55,48 @@ async function renderHomeTab(container) {
   
   // Render game Nối từ
   renderWordChainCard(container.querySelector("#onlineGameList"));
+}
 
-  container.querySelector("#onyxPlus").onclick = () => openOnyxTopup();
-  container.querySelector("#giftcodeBtn").onclick = () => openGiftcodeModal();
+// Tab Lấy Key
+function renderGetKeyTab(container) {
+  container.innerHTML = `
+    <h3 class="neon-title-sm">🔑 Lấy Key</h3>
+    <div style="background: rgba(0,255,224,0.05); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+      <p style="color: #888; font-size: 13px; margin-bottom: 12px;">
+        Developer: <span style="color: var(--neon-yellow);">@Black (black_0x000000)</span>
+      </p>
+      
+      <!-- Key Bản Kín -->
+      <div style="background: rgba(255,45,157,0.08); border: 1px solid var(--neon-pink); border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+        <p style="color: var(--neon-cyan); font-weight: bold;">🔐 Key Bản Kín - by HN</p>
+        <button class="neon-btn" id="getKeyBanKin" style="width: 100%; margin-top: 8px;">
+          📥 Lấy Key
+        </button>
+      </div>
+      
+      <!-- Key Bản Esp -->
+      <div style="background: rgba(185,55,242,0.08); border: 1px solid var(--neon-purple); border-radius: 8px; padding: 14px;">
+        <p style="color: var(--neon-yellow); font-weight: bold;">👁️ Key Bản Esp chấp tố - by CakMod&Black</p>
+        <button class="neon-btn" id="getKeyEsp" style="width: 100%; margin-top: 8px;">
+          📥 Lấy Key
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Xử lý lấy Key Bản Kín
+  container.querySelector("#getKeyBanKin").onclick = () => {
+    window.open('https://mokhoasub.com/pS9U1E', '_blank');
+    toast("Đang mở link lấy Key Bản Kín...");
+    addLog(`Tài khoản ${getCurrentUser().role}: "${getCurrentUser().username}" đã lấy Key Bản Kín lúc ${nowVN()}`);
+  };
+
+  // Xử lý lấy Key Esp
+  container.querySelector("#getKeyEsp").onclick = () => {
+    window.open('https://admin.ngocthinhmodder.site/gettounlock/getkey/lienquanchapto.php', '_blank');
+    toast("Đang mở link lấy Key Esp...");
+    addLog(`Tài khoản ${getCurrentUser().role}: "${getCurrentUser().username}" đã lấy Key Esp lúc ${nowVN()}`);
+  };
 }
 
 async function refreshHomeStats() {
