@@ -118,11 +118,20 @@ body::before {
 
 .big-tabs, .sub-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
 .big-tab-btn, .sub-tab-btn {
-  background: transparent; border: 1px solid var(--neon-purple); color: var(--neon-purple);
-  padding: 8px 16px; border-radius: 6px; cursor: pointer; font-family: 'Orbitron', sans-serif;
+  background: transparent;
+  border: 1px solid var(--neon-purple);
+  color: var(--neon-purple);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  transition: all 0.2s;
 }
 .big-tab-btn.active, .sub-tab-btn.active, .big-tab-btn:hover, .sub-tab-btn:hover {
-  background: var(--neon-purple); color: #05050f; box-shadow: 0 0 10px var(--neon-purple);
+  background: var(--neon-purple);
+  color: #05050f;
+  box-shadow: 0 0 10px var(--neon-purple);
 }
 .sub-tabs { margin-bottom: 16px; }
 .sub-content { background: rgba(11,11,30,0.7); border: 1px solid rgba(0,255,224,0.3); border-radius: 8px; padding: 16px; }
@@ -188,3 +197,80 @@ body::before {
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 .loading { text-align: center; padding: 30px; color: var(--neon-cyan); }
+
+/* Tab Game */
+#gameTabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+#gameTabs .sub-tab-btn {
+  background: transparent;
+  border: 1px solid var(--neon-purple);
+  color: var(--neon-purple);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+#gameTabs .sub-tab-btn.active,
+#gameTabs .sub-tab-btn:hover {
+  background: var(--neon-purple);
+  color: #05050f;
+  box-shadow: 0 0 10px var(--neon-purple);
+}
+
+#gameContent {
+  background: rgba(11,11,30,0.7);
+  border: 1px solid rgba(0,255,224,0.3);
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 200px;
+}
+
+/* Snake touch controls */
+.snake-touch-controls {
+  display: grid;
+  grid-template-columns: repeat(3, 60px);
+  gap: 5px;
+  justify-content: center;
+  margin: 10px auto;
+}
+
+.snake-touch-btn {
+  background: rgba(0,255,224,0.2);
+  border: 2px solid #00ffe0;
+  border-radius: 8px;
+  color: #00ffe0;
+  font-size: 24px;
+  padding: 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.snake-touch-btn:active {
+  background: rgba(0,255,224,0.5);
+  transform: scale(0.95);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .neon-title { font-size: 12px; }
+  .dash-header { flex-direction: column; align-items: flex-start; }
+  .big-tabs, .sub-tabs { width: 100%; }
+  .big-tab-btn, .sub-tab-btn { flex: 1; text-align: center; font-size: 11px; padding: 6px 10px; }
+  .neon-table { font-size: 12px; }
+  .neon-table th, .neon-table td { padding: 4px 6px; }
+  .home-hud { font-size: 13px; gap: 10px; }
+  .snake-launch-box { width: 100px; height: 100px; }
+  .modal-box { max-width: 95%; padding: 16px; }
+  .gc-grid { grid-template-columns: 1fr; }
+  .snake-touch-controls { grid-template-columns: repeat(3, 50px); }
+  .snake-touch-btn { font-size: 20px; padding: 6px; }
+  #snakeCanvas { width: 100%; height: auto; }
+}
