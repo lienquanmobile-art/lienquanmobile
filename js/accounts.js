@@ -5,7 +5,6 @@ let accountsInterval = null;
 async function renderAccountsTab(container) {
   container.innerHTML = `<div class="loading">Đang tải...</div>`;
   
-  // Tạo HTML
   container.innerHTML = `
     <h3 class="neon-title-sm">Quản lí tài khoản User</h3>
     <table class="neon-table">
@@ -17,20 +16,21 @@ async function renderAccountsTab(container) {
       <thead><tr><th>Tên tài khoản</th><th>Trạng thái</th></tr></thead>
       <tbody id="adminsTbody"></tbody>
     </table>
+    <h3 class="neon-title-sm">Quản lí tài khoản VIP</h3>
+    <table class="neon-table">
+      <thead><tr><th>Tên tài khoản</th><th>Trạng thái</th></tr></thead>
+      <tbody id="vipTbody"></tbody>
+    </table>
   `;
 
-  // Load dữ liệu lần đầu
   await loadAccountsData();
   
-  // Clear interval cũ nếu có
   if (accountsInterval) {
     clearInterval(accountsInterval);
     accountsInterval = null;
   }
   
-  // Tạo interval mới, cập nhật mỗi 2 giây
   accountsInterval = setInterval(async () => {
-    // Kiểm tra xem container có còn trong DOM không
     if (!document.body.contains(container)) {
       clearInterval(accountsInterval);
       accountsInterval = null;
@@ -47,7 +47,9 @@ async function loadAccountsData() {
     
     const all = snap.val();
     const users = Object.values(all).filter(u => u.role === "user");
-    const admins = Object.values(all).filter(u => u.role === "admin" || u.role === "owner");
+    const admins = Object.values(all).filter(u => u.role === "admin");
+    const vips = Object.values(all).filter(u => u.role === "vip");
+    const owner = Object.values(all).filter(u => u.role === "owner");
     
     // Cập nhật bảng User
     const userTbody = document.getElementById("usersTbody");
@@ -57,7 +59,9 @@ async function loadAccountsData() {
         const statusClass = u.status === "online" ? "online" : "offline";
         const statusText = u.status === "online" ? "🟢 Online" : "🔴 Offline";
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${u.username}</td><td class="${statusClass}">${statusText}</td><td>${u.onyx || 0}</td><td>${u.coins || 0}</td>`;
+        const onyxDisplay = u.onyx === Infinity ? "∞" : (u.onyx || 0);
+        const coinsDisplay = u.coins === Infinity ? "∞" : (u.coins || 0);
+        tr.innerHTML = `<td>${u.username}</td><td class="${statusClass}">${statusText}</td><td>${onyxDisplay}</td><td>${coinsDisplay}</td>`;
         userTbody.appendChild(tr);
       });
     }
@@ -74,17 +78,41 @@ async function loadAccountsData() {
         adminTbody.appendChild(tr);
       });
     }
+    
+    // Cập nhật bảng VIP
+    const vipTbody = document.getElementById("vipTbody");
+    if (vipTbody) {
+      vipTbody.innerHTML = "";
+      const allVips = [...vips, ...owner];
+      allVips.forEach(u => {
+        const statusClass = u.status === "online" ? "online" : "offline";
+        const statusText = u.status === "online" ? "🟢 Online" : "🔴 Offline";
+        const roleDisplay = u.role === "owner" ? "👑 Owner" : "⭐ VIP";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${u.username} ${roleDisplay}</td><td class="${statusClass}">${statusText}</td>`;
+        vipTbody.appendChild(tr);
+      });
+    }
   } catch (error) {
     console.error("Lỗi load accounts:", error);
   }
 }
 
 async function renderCreateAccountTab(container) {
+  const me = getCurrentUser();
+  
+  // Chỉ owner và admin mới tạo được tài khoản
+  if (me.role !== "owner" && me.role !== "admin") {
+    container.innerHTML = `<div style="color: #ff4444; padding: 20px;">Bạn không có quyền tạo tài khoản!</div>`;
+    return;
+  }
+  
   container.innerHTML = `
     <h3 class="neon-title-sm">Tạo tài khoản</h3>
     <div class="form-row">
       <label>Loại tài khoản</label>
       <select id="newAccRole" class="neon-input">
+        ${me.role === "owner" ? `<option value="vip">VIP</option>` : ""}
         <option value="admin">Admin</option>
         <option value="user">User</option>
       </select>
@@ -102,7 +130,6 @@ async function renderCreateAccountTab(container) {
   `;
 
   const roleSel = container.querySelector("#newAccRole");
-  const me = getCurrentUser();
   if (me.role === "admin") {
     roleSel.innerHTML = `<option value="user">User</option>`;
   }
@@ -119,7 +146,9 @@ async function renderCreateAccountTab(container) {
     const token = await genUniqueToken();
     const userData = {
       username, password, role, token,
-      status: "offline", coins: 0, onyx: 0,
+      status: "offline",
+      coins: role === "vip" ? Infinity : 0,
+      onyx: role === "vip" ? Infinity : 0,
       created: Date.now(), banned: false
     };
     await db.ref("users/" + keyify(username)).set(userData);
@@ -131,7 +160,6 @@ async function renderCreateAccountTab(container) {
     container.querySelector("#newAccUsername").value = "";
     container.querySelector("#newAccPassword").value = "";
     
-    // Refresh danh sách nếu đang ở tab accounts
     if (accountsInterval) {
       await loadAccountsData();
     }
