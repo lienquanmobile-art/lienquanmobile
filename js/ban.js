@@ -9,6 +9,13 @@ const BAN_PRESETS = {
 
 function renderBanTab(container) {
   const me = getCurrentUser();
+  
+  // Kiểm tra quyền cấm (owner, vip, admin)
+  if (me.role !== "owner" && me.role !== "vip" && me.role !== "admin") {
+    container.innerHTML = `<div style="color: #ff4444; padding: 20px;">Bạn không có quyền cấm tài khoản!</div>`;
+    return;
+  }
+  
   container.innerHTML = `
     <h3 class="neon-title-sm">Mục cấm</h3>
     <div class="form-row">
@@ -65,8 +72,12 @@ function renderBanTab(container) {
 
     const targetUser = await getUser(target);
     if (!targetUser || targetUser.token !== token) { toast("Tài khoản hoặc token không đúng!"); return; }
-    if (targetUser.role === "owner") { toast("Không thể cấm tài khoản Owner!"); return; }
-    if (me.role === "admin" && targetUser.role !== "user") { toast("Admin chỉ có thể cấm tài khoản User!"); return; }
+    
+    // Kiểm tra quyền cấm
+    if (!canBan(me, targetUser)) {
+      toast("Bạn không có quyền cấm tài khoản này!");
+      return;
+    }
 
     const permanent = container.querySelector("#banPermanent").checked;
     const preset = container.querySelector("#banPreset").value;
@@ -98,7 +109,6 @@ function renderBanTab(container) {
     await db.ref("bans/" + keyify(target)).set(banData);
     await db.ref("users/" + keyify(target) + "/status").set("offline");
     
-    // Thêm thông báo ban vào realtime để kích hoạt popup
     await db.ref("ban_trigger/" + keyify(target)).set({
       triggered: Date.now(),
       reason: reason,
@@ -139,21 +149,21 @@ async function loadBanList(tbody, me, silent) {
     const tdBtn = el("td");
     const btn = el("button", "neon-btn small", "Mở khóa");
     
-    // Chỉ owner mới có thể mở khóa
-    if (me.role !== "owner") {
+    // Chỉ owner và vip mới có thể mở khóa
+    if (me.role !== "owner" && me.role !== "vip") {
       btn.disabled = true;
       btn.style.opacity = "0.5";
       btn.style.cursor = "not-allowed";
-      btn.title = "Chỉ Owner mới có quyền mở khóa";
+      btn.title = "Chỉ Owner và VIP mới có quyền mở khóa";
     }
     
     btn.onclick = async () => {
-      if (me.role !== "owner") {
-        toast("Chỉ Owner mới có quyền mở khóa!");
+      if (me.role !== "owner" && me.role !== "vip") {
+        toast("Chỉ Owner và VIP mới có quyền mở khóa!");
         return;
       }
       await db.ref("bans/" + username).remove();
-      await db.ref("ban_trigger/" + keyify(username)).remove(); // Xóa trigger
+      await db.ref("ban_trigger/" + keyify(username)).remove();
       await addLog(`Tài khoản ${me.role}: "${me.username}" đã mở khóa tài khoản "${username}" lúc ${nowVN()}`);
       loadBanList(tbody, me);
     };
