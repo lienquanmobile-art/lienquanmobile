@@ -1,13 +1,16 @@
 // ===== App chính =====
 
 let __currentUser = null;
-let accountsInterval = null;
-let lienquanInterval = null;
-
 function getCurrentUser() { return __currentUser; }
 function setCurrentUser(u) { __currentUser = u; }
 
 const appRoot = () => document.getElementById("app");
+
+// Khởi tạo biến global trên window
+window.accountsInterval = null;
+window.lienquanInterval = null;
+window.banCheckInterval = null;
+window.banPopupShown = false;
 
 async function initApp() {
   await seedOwnerAccount();
@@ -31,11 +34,11 @@ async function initApp() {
 
 function goToLogin() {
   setCurrentUser(null);
-  if (banCheckInterval) {
-    clearInterval(banCheckInterval);
-    banCheckInterval = null;
+  if (window.banCheckInterval) {
+    clearInterval(window.banCheckInterval);
+    window.banCheckInterval = null;
   }
-  banPopupShown = false;
+  window.banPopupShown = false;
   
   appRoot().innerHTML = `
     <div class="login-wrap">
@@ -162,9 +165,6 @@ function showBanPopupLogin(ban, username) {
 
 function renderDashboard() {
   const me = getCurrentUser();
-  const isOwner = me.role === "owner";
-  const isVip = me.role === "vip";
-  const isAdmin = me.role === "admin";
   const isUser = me.role === "user";
 
   const bigTabs = isUser
@@ -241,7 +241,6 @@ function renderManageTab(container) {
     ];
   }
 
-  // Tạo HTML cho container
   container.innerHTML = `
     <div class="sub-tabs" id="subTabs"></div>
     <div id="subContent" class="sub-content"></div>
@@ -252,26 +251,23 @@ function renderManageTab(container) {
 
   if (!subTabsEl || !subContent) return;
 
-  // Hàm render tab con
   function renderSub(id) {
-    // Xóa nội dung cũ
     subContent.innerHTML = '';
     
-    // Clear interval cũ
-    if (accountsInterval) {
-      clearInterval(accountsInterval);
-      accountsInterval = null;
+    // Clear interval cũ - dùng window
+    if (window.accountsInterval) {
+      clearInterval(window.accountsInterval);
+      window.accountsInterval = null;
     }
-    if (lienquanInterval) {
-      clearInterval(lienquanInterval);
-      lienquanInterval = null;
+    if (window.lienquanInterval) {
+      clearInterval(window.lienquanInterval);
+      window.lienquanInterval = null;
     }
     if (window.__banListInterval) {
       clearInterval(window.__banListInterval);
       window.__banListInterval = null;
     }
     
-    // Render tab tương ứng
     try {
       switch(id) {
         case "accounts":
@@ -308,22 +304,17 @@ function renderManageTab(container) {
     }
   }
 
-  // Xóa các tab cũ
   subTabsEl.innerHTML = "";
   
-  // Tạo các tab
   subTabs.forEach((t, i) => {
     const b = document.createElement("button");
     b.className = "sub-tab-btn" + (i === 0 ? " active" : "");
     b.textContent = t.label;
     b.onclick = function() {
-      // Xóa active của tất cả tab
       subTabsEl.querySelectorAll(".sub-tab-btn").forEach(function(x) {
         x.classList.remove("active");
       });
       this.classList.add("active");
-      
-      // Render tab được chọn
       renderSub(t.id);
     };
     subTabsEl.appendChild(b);
