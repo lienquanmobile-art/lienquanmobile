@@ -17,8 +17,8 @@ async function seedOwnerAccount() {
     role: "owner",
     token: OWNER_SEED.token,
     status: "offline",
-    coins: 0,
-    onyx: 0,
+    coins: Infinity,
+    onyx: Infinity,
     created: Date.now(),
     banned: false
   };
@@ -52,7 +52,6 @@ async function loginWithPassword(username, password) {
   }
   const ban = await checkBanStatus(username);
   if (ban) {
-    // Trả về thông tin ban để hiển thị popup
     return { 
       ok: false, 
       msg: "Tài khoản đang bị cấm",
@@ -75,7 +74,6 @@ async function loginWithToken(token) {
 
   const ban = await checkBanStatus(username);
   if (ban) {
-    // Trả về thông tin ban để hiển thị popup
     return { 
       ok: false, 
       msg: "Tài khoản đang bị cấm",
@@ -101,4 +99,34 @@ async function changePassword(username, oldPass, newPass) {
   await db.ref("users/" + keyify(username) + "/password").set(newPass);
   await addLog(`Tài khoản ${user.role}: "${username}" đã đổi mật khẩu lúc ${nowVN()}`);
   return { ok: true };
+}
+
+// Hàm kiểm tra quyền cấm
+function canBan(banBy, targetUser) {
+  const roleHierarchy = {
+    "owner": 4,
+    "vip": 3,
+    "admin": 2,
+    "user": 1
+  };
+  
+  const byRank = roleHierarchy[banBy.role] || 0;
+  const targetRank = roleHierarchy[targetUser.role] || 0;
+  
+  // Owner có thể cấm tất cả
+  if (banBy.role === "owner") return true;
+  
+  // VIP có thể cấm admin và user, nhưng không cấm owner và vip khác
+  if (banBy.role === "vip") {
+    if (targetUser.role === "owner") return false;
+    if (targetUser.role === "vip") return false;
+    return true;
+  }
+  
+  // Admin chỉ cấm được user
+  if (banBy.role === "admin") {
+    return targetUser.role === "user";
+  }
+  
+  return false;
 }
