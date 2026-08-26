@@ -11,8 +11,7 @@ async function renderHomeTab(container) {
     
     <!-- Tab Game -->
     <div class="sub-tabs" id="gameTabs">
-      <button class="sub-tab-btn active" data-tab="games">🎮 Game</button>
-      <button class="sub-tab-btn" data-tab="getkey">🔑 Lấy Key</button>
+      <button class="sub-tab-btn active" data-tab="getkey">🔑 Lấy Key</button>
     </div>
     <div id="gameContent" class="sub-content" style="margin-top: 10px;"></div>
   `;
@@ -26,35 +25,17 @@ async function renderHomeTab(container) {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       const tabName = tab.dataset.tab;
-      if (tabName === 'games') {
-        renderGamesTab(content);
-      } else if (tabName === 'getkey') {
+      if (tabName === 'getkey') {
         renderGetKeyTab(content);
       }
     };
   });
 
-  // Mặc định hiển thị tab Game
-  renderGamesTab(content);
+  // Mặc định hiển thị tab Lấy Key
+  renderGetKeyTab(content);
 
   container.querySelector("#onyxPlus").onclick = () => openOnyxTopup();
   container.querySelector("#giftcodeBtn").onclick = () => openGiftcodeModal();
-}
-
-// Tab Game
-function renderGamesTab(container) {
-  container.innerHTML = `
-    <h3 class="neon-title-sm">🎮 Game kiếm xu</h3>
-    <div class="game-list" id="gameList"></div>
-    <h3 class="neon-title-sm" style="margin-top: 20px;">🌐 Game Online</h3>
-    <div class="game-list" id="onlineGameList"></div>
-  `;
-
-  // Render game Snake
-  renderSnakeCard(container.querySelector("#gameList"));
-  
-  // Render game Nối từ
-  renderWordChainCard(container.querySelector("#onlineGameList"));
 }
 
 // Tab Lấy Key
