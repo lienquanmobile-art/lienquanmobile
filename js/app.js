@@ -1,6 +1,9 @@
 // ===== App chính =====
 
 let __currentUser = null;
+let accountsInterval = null;
+let lienquanInterval = null;
+
 function getCurrentUser() { return __currentUser; }
 function setCurrentUser(u) { __currentUser = u; }
 
@@ -164,7 +167,6 @@ function renderDashboard() {
   const isAdmin = me.role === "admin";
   const isUser = me.role === "user";
 
-  // Xác định tab hiển thị
   let bigTabs = [];
   
   if (isUser) {
@@ -233,7 +235,6 @@ function renderManageTab(container) {
   const isVip = me.role === "vip";
   const isAdmin = me.role === "admin";
   
-  // Xác định sub tabs
   let subTabs = [];
   
   if (isOwner) {
@@ -276,6 +277,7 @@ function renderManageTab(container) {
   const renderSub = (id) => {
     subContent.innerHTML = '';
     
+    // Clear interval cũ
     if (accountsInterval) {
       clearInterval(accountsInterval);
       accountsInterval = null;
@@ -339,7 +341,10 @@ function renderManageTab(container) {
     subTabsEl.appendChild(b);
   });
 
-  renderSub(subTabs[0]?.id || "accounts");
+  // Mặc định hiển thị tab đầu tiên
+  if (subTabs.length > 0) {
+    renderSub(subTabs[0].id);
+  }
 }
 
 window.addEventListener("DOMContentLoaded", initApp);
