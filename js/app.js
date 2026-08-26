@@ -1,11 +1,6 @@
 // ===== App chính =====
 
 let __currentUser = null;
-let accountsInterval = null;
-let lienquanInterval = null;
-let banCheckInterval = null;
-let banPopupShown = false;
-
 function getCurrentUser() { return __currentUser; }
 function setCurrentUser(u) { __currentUser = u; }
 
@@ -14,6 +9,7 @@ const appRoot = () => document.getElementById("app");
 async function initApp() {
   await seedOwnerAccount();
   
+  // Kiểm tra ban khi load
   await checkBanOnLoad();
   
   const savedUsername = localStorage.getItem("currentUser");
@@ -23,6 +19,7 @@ async function initApp() {
     if (user && !ban) {
       setCurrentUser(user);
       renderDashboard();
+      // Bắt đầu kiểm tra ban realtime sau khi đăng nhập
       setTimeout(startBanChecker, 1000);
       return;
     }
@@ -169,20 +166,9 @@ function renderDashboard() {
   const isAdmin = me.role === "admin";
   const isUser = me.role === "user";
 
-  let bigTabs = [];
-  
-  if (isUser) {
-    bigTabs = [
-      { id: "home", label: "Trang Chủ" },
-      { id: "settings", label: "Cài Đặt" }
-    ];
-  } else {
-    bigTabs = [
-      { id: "home", label: "Trang Chủ" },
-      { id: "manage", label: "Quản Lí" },
-      { id: "settings", label: "Cài Đặt" }
-    ];
-  }
+  const bigTabs = isUser
+    ? [{ id: "home", label: "Trang Chủ" }, { id: "settings", label: "Cài Đặt" }]
+    : [{ id: "home", label: "Trang Chủ" }, { id: "manage", label: "Quản Lí" }, { id: "settings", label: "Cài Đặt" }];
 
   appRoot().innerHTML = `
     <div class="dash-wrap">
@@ -265,6 +251,7 @@ function renderManageTab(container) {
   if (!subTabsEl || !subContent) return;
 
   const renderSub = (id) => {
+    // Xóa nội dung cũ
     subContent.innerHTML = '';
     
     // Clear interval cũ
@@ -281,6 +268,7 @@ function renderManageTab(container) {
       window.__banListInterval = null;
     }
     
+    // Render tab tương ứng
     try {
       switch(id) {
         case "accounts":
@@ -317,14 +305,18 @@ function renderManageTab(container) {
     }
   };
 
+  // Xóa các tab cũ
   subTabsEl.innerHTML = "";
   
   subTabs.forEach((t, i) => {
     const b = el("button", "sub-tab-btn" + (i === 0 ? " active" : ""), t.label);
     b.onclick = function(tabId) {
       return function() {
+        // Xóa active của tất cả tab
         subTabsEl.querySelectorAll(".sub-tab-btn").forEach(x => x.classList.remove("active"));
         this.classList.add("active");
+        
+        // Render tab được chọn
         renderSub(tabId);
       };
     }(t.id);
