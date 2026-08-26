@@ -11,7 +11,8 @@ async function renderHomeTab(container) {
     
     <!-- Tab Game -->
     <div class="sub-tabs" id="gameTabs">
-      <button class="sub-tab-btn active" data-tab="getkey">🔑 Lấy Key</button>
+      <button class="sub-tab-btn active" data-tab="games">🎮 Game</button>
+      <button class="sub-tab-btn" data-tab="getkey">🔑 Lấy Key</button>
     </div>
     <div id="gameContent" class="sub-content" style="margin-top: 10px;"></div>
   `;
@@ -25,17 +26,30 @@ async function renderHomeTab(container) {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       const tabName = tab.dataset.tab;
-      if (tabName === 'getkey') {
+      if (tabName === 'games') {
+        renderGamesTab(content);
+      } else if (tabName === 'getkey') {
         renderGetKeyTab(content);
       }
     };
   });
 
-  // Mặc định hiển thị tab Lấy Key
-  renderGetKeyTab(content);
+  // Mặc định hiển thị tab Game (trống)
+  renderGamesTab(content);
 
   container.querySelector("#onyxPlus").onclick = () => openOnyxTopup();
   container.querySelector("#giftcodeBtn").onclick = () => openGiftcodeModal();
+}
+
+// Tab Game - TRỐNG, không có game
+function renderGamesTab(container) {
+  container.innerHTML = `
+    <div style="text-align: center; padding: 40px 20px; color: #888;">
+      <p style="font-size: 48px; margin-bottom: 16px;">🎮</p>
+      <p style="font-size: 16px; color: var(--neon-cyan);">Chưa có game nào</p>
+      <p style="font-size: 13px; color: #666;">Tính năng đang được phát triển</p>
+    </div>
+  `;
 }
 
 // Tab Lấy Key
