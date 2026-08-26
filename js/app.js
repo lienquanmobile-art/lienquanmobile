@@ -4,9 +4,9 @@ let __currentUser = null;
 function getCurrentUser() { return __currentUser; }
 function setCurrentUser(u) { __currentUser = u; }
 
-// Khai báo biến global cho interval
-window.accountsInterval = null;
-window.lienquanInterval = null;
+// Khai báo biến global
+let accountsInterval = null;
+let lienquanInterval = null;
 
 const appRoot = () => document.getElementById("app");
 
@@ -266,14 +266,14 @@ function renderManageTab(container) {
   const renderSub = (id) => {
     subContent.innerHTML = '';
     
-    // Clear interval cũ - dùng window để truy cập global
-    if (window.accountsInterval) {
-      clearInterval(window.accountsInterval);
-      window.accountsInterval = null;
+    // Clear interval cũ
+    if (accountsInterval) {
+      clearInterval(accountsInterval);
+      accountsInterval = null;
     }
-    if (window.lienquanInterval) {
-      clearInterval(window.lienquanInterval);
-      window.lienquanInterval = null;
+    if (lienquanInterval) {
+      clearInterval(lienquanInterval);
+      lienquanInterval = null;
     }
     if (window.__banListInterval) {
       clearInterval(window.__banListInterval);
