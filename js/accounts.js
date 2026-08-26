@@ -1,7 +1,5 @@
 // ===== Quản lí tài khoản (danh sách + tạo tài khoản) =====
 
-let accountsInterval = null;
-
 async function renderAccountsTab(container) {
   container.innerHTML = `<div class="loading">Đang tải...</div>`;
   
@@ -24,20 +22,6 @@ async function renderAccountsTab(container) {
   `;
 
   await loadAccountsData();
-  
-  if (accountsInterval) {
-    clearInterval(accountsInterval);
-    accountsInterval = null;
-  }
-  
-  accountsInterval = setInterval(async () => {
-    if (!document.body.contains(container)) {
-      clearInterval(accountsInterval);
-      accountsInterval = null;
-      return;
-    }
-    await loadAccountsData();
-  }, 2000);
 }
 
 async function loadAccountsData() {
@@ -101,13 +85,11 @@ async function loadAccountsData() {
 async function renderCreateAccountTab(container) {
   const me = getCurrentUser();
   
-  // Kiểm tra đăng nhập
   if (!me) {
     container.innerHTML = `<div style="color: #ff4444; padding: 20px;">Vui lòng đăng nhập!</div>`;
     return;
   }
   
-  // Chỉ owner và admin mới tạo được tài khoản
   if (me.role !== "owner" && me.role !== "admin") {
     container.innerHTML = `<div style="color: #ff4444; padding: 20px;">Bạn không có quyền tạo tài khoản!</div>`;
     return;
@@ -140,55 +122,32 @@ async function renderCreateAccountTab(container) {
     roleSel.innerHTML = `<option value="user">User</option>`;
   }
 
-  // Gán sự kiện cho nút Tạo
   const createBtn = container.querySelector("#createAccBtn");
   if (createBtn) {
     createBtn.onclick = async function() {
-      console.log("=== Bắt đầu tạo tài khoản ===");
-      
       const role = roleSel.value;
       const username = container.querySelector("#newAccUsername").value.trim();
       const password = container.querySelector("#newAccPassword").value;
       
-      console.log("Role:", role);
-      console.log("Username:", username);
+      if (!username) { toast("Vui lòng nhập tên đăng nhập!"); return; }
+      if (!password) { toast("Vui lòng nhập mật khẩu!"); return; }
       
-      // Kiểm tra nhập liệu
-      if (!username) { 
-        toast("Vui lòng nhập tên đăng nhập!"); 
-        return; 
-      }
-      
-      if (!password) { 
-        toast("Vui lòng nhập mật khẩu!"); 
-        return; 
-      }
-      
-      // Kiểm tra tên đăng nhập đã tồn tại
       try {
         const exists = await db.ref("users/" + keyify(username)).get();
-        if (exists.exists()) { 
-          toast("Tên tài khoản đã tồn tại!"); 
-          return; 
-        }
+        if (exists.exists()) { toast("Tên tài khoản đã tồn tại!"); return; }
       } catch (error) {
-        console.error("Lỗi kiểm tra username:", error);
         toast("Lỗi kiểm tra tài khoản: " + error.message);
         return;
       }
 
-      // Tạo token
       let token;
       try {
         token = await genUniqueToken();
-        console.log("Token đã tạo:", token);
       } catch (error) {
-        console.error("Lỗi tạo token:", error);
         toast("Lỗi tạo token: " + error.message);
         return;
       }
       
-      // Tạo dữ liệu user - KHÔNG dùng Infinity
       const isVip = role === "vip";
       const userData = {
         username: username, 
@@ -202,17 +161,11 @@ async function renderCreateAccountTab(container) {
         banned: false
       };
       
-      console.log("User data:", userData);
-      console.log("Coins value:", userData.coins);
-      console.log("Onyx value:", userData.onyx);
-      
-      // Lưu vào Firebase
       try {
         await db.ref("users/" + keyify(username)).set(userData);
         await db.ref("tokens/" + token).set(username);
         await addLog(`Tài khoản ${me.role}: "${me.username}" đã tạo tài khoản ${role} "${username}" lúc ${nowVN()}`);
         
-        // Hiển thị kết quả
         const resultDiv = container.querySelector("#createAccResult");
         if (resultDiv) {
           resultDiv.innerHTML = `
@@ -220,7 +173,6 @@ async function renderCreateAccountTab(container) {
             <p>Tên: <b>${username}</b></p>
             <p>Role: <b>${role === "vip" ? "⭐ VIP" : role}</b></p>
             <p>Token: <b class="glow-text">${token}</b></p>
-            <p style="color: #888; font-size: 12px; margin-top: 8px;">(VIP có 999.999.999 xu và onyx)</p>
           `;
         }
         
@@ -228,14 +180,9 @@ async function renderCreateAccountTab(container) {
         container.querySelector("#newAccPassword").value = "";
         
         toast("Tạo tài khoản thành công!");
-        console.log("=== Tạo tài khoản thành công ===");
         
-        if (accountsInterval) {
-          await loadAccountsData();
-        }
+        await loadAccountsData();
       } catch (error) {
-        console.error("Lỗi lưu dữ liệu:", error);
-        console.error("Error details:", error.message);
         toast("Lỗi lưu dữ liệu: " + error.message);
         const resultDiv = container.querySelector("#createAccResult");
         if (resultDiv) {
