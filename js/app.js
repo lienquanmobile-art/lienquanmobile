@@ -1,11 +1,12 @@
 // ===== App chính =====
 
 let __currentUser = null;
-let accountsInterval = null;
-let lienquanInterval = null;
-
 function getCurrentUser() { return __currentUser; }
 function setCurrentUser(u) { __currentUser = u; }
+
+// Khai báo biến global cho interval
+window.accountsInterval = null;
+window.lienquanInterval = null;
 
 const appRoot = () => document.getElementById("app");
 
@@ -174,19 +175,7 @@ function renderDashboard() {
       { id: "home", label: "Trang Chủ" },
       { id: "settings", label: "Cài Đặt" }
     ];
-  } else if (isAdmin) {
-    bigTabs = [
-      { id: "home", label: "Trang Chủ" },
-      { id: "manage", label: "Quản Lí" },
-      { id: "settings", label: "Cài Đặt" }
-    ];
-  } else if (isVip) {
-    bigTabs = [
-      { id: "home", label: "Trang Chủ" },
-      { id: "manage", label: "Quản Lí" },
-      { id: "settings", label: "Cài Đặt" }
-    ];
-  } else if (isOwner) {
+  } else {
     bigTabs = [
       { id: "home", label: "Trang Chủ" },
       { id: "manage", label: "Quản Lí" },
@@ -277,14 +266,14 @@ function renderManageTab(container) {
   const renderSub = (id) => {
     subContent.innerHTML = '';
     
-    // Clear interval cũ
-    if (accountsInterval) {
-      clearInterval(accountsInterval);
-      accountsInterval = null;
+    // Clear interval cũ - dùng window để truy cập global
+    if (window.accountsInterval) {
+      clearInterval(window.accountsInterval);
+      window.accountsInterval = null;
     }
-    if (lienquanInterval) {
-      clearInterval(lienquanInterval);
-      lienquanInterval = null;
+    if (window.lienquanInterval) {
+      clearInterval(window.lienquanInterval);
+      window.lienquanInterval = null;
     }
     if (window.__banListInterval) {
       clearInterval(window.__banListInterval);
