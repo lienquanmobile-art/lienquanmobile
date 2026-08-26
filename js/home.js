@@ -2,10 +2,15 @@
 
 async function renderHomeTab(container) {
   const me = getCurrentUser();
+  const isVip = me.role === "vip";
+  const isOwner = me.role === "owner";
+  const displayCoins = (me.role === "vip" || me.role === "owner") ? "∞" : (me.coins || 0);
+  const displayOnyx = (me.role === "vip" || me.role === "owner") ? "∞" : (me.onyx || 0);
+  
   container.innerHTML = `
     <div class="home-hud">
-      <span>Số xu: <b id="hudCoins">${me.coins || 0}</b></span>
-      <span>Số Onyx: <b id="hudOnyx">${me.onyx || 0}</b> <span id="onyxPlus" class="onyx-plus">+</span></span>
+      <span>Số xu: <b id="hudCoins">${displayCoins}</b></span>
+      <span>Số Onyx: <b id="hudOnyx">${displayOnyx}</b> <span id="onyxPlus" class="onyx-plus">+</span></span>
       <button class="neon-btn small" id="giftcodeBtn">Nhập Giftcode</button>
     </div>
     
@@ -17,7 +22,6 @@ async function renderHomeTab(container) {
     <div id="gameContent" class="sub-content" style="margin-top: 10px;"></div>
   `;
 
-  // Xử lý chuyển tab
   const tabs = container.querySelectorAll('#gameTabs .sub-tab-btn');
   const content = container.querySelector('#gameContent');
   
@@ -34,14 +38,12 @@ async function renderHomeTab(container) {
     };
   });
 
-  // Mặc định hiển thị tab Game (trống)
   renderGamesTab(content);
 
   container.querySelector("#onyxPlus").onclick = () => openOnyxTopup();
   container.querySelector("#giftcodeBtn").onclick = () => openGiftcodeModal();
 }
 
-// Tab Game - TRỐNG, không có game
 function renderGamesTab(container) {
   container.innerHTML = `
     <div style="text-align: center; padding: 40px 20px; color: #888;">
@@ -52,7 +54,6 @@ function renderGamesTab(container) {
   `;
 }
 
-// Tab Lấy Key
 function renderGetKeyTab(container) {
   container.innerHTML = `
     <h3 class="neon-title-sm">🔑 Lấy Key</h3>
@@ -79,14 +80,12 @@ function renderGetKeyTab(container) {
     </div>
   `;
 
-  // Xử lý lấy Key Bản Kín
   container.querySelector("#getKeyBanKin").onclick = () => {
     window.open('https://mokhoasub.com/pS9U1E', '_blank');
     toast("Đang mở link lấy Key Bản Kín...");
     addLog(`Tài khoản ${getCurrentUser().role}: "${getCurrentUser().username}" đã lấy Key Bản Kín lúc ${nowVN()}`);
   };
 
-  // Xử lý lấy Key Esp
   container.querySelector("#getKeyEsp").onclick = () => {
     window.open('https://admin.ngocthinhmodder.site/gettounlock/getkey/lienquanchapto.php', '_blank');
     toast("Đang mở link lấy Key Esp...");
@@ -102,8 +101,12 @@ async function refreshHomeStats() {
   setCurrentUser(u);
   const c = document.getElementById("hudCoins");
   const o = document.getElementById("hudOnyx");
-  if (c) c.textContent = u.coins || 0;
-  if (o) o.textContent = u.onyx || 0;
+  if (c) {
+    c.textContent = (u.role === "vip" || u.role === "owner") ? "∞" : (u.coins || 0);
+  }
+  if (o) {
+    o.textContent = (u.role === "vip" || u.role === "owner") ? "∞" : (u.onyx || 0);
+  }
 }
 
 function openOnyxTopup() {
