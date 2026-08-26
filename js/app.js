@@ -1,6 +1,9 @@
 // ===== App chính =====
 
 let __currentUser = null;
+let accountsInterval = null;
+let lienquanInterval = null;
+
 function getCurrentUser() { return __currentUser; }
 function setCurrentUser(u) { __currentUser = u; }
 
@@ -9,7 +12,6 @@ const appRoot = () => document.getElementById("app");
 async function initApp() {
   await seedOwnerAccount();
   
-  // Kiểm tra ban khi load
   await checkBanOnLoad();
   
   const savedUsername = localStorage.getItem("currentUser");
@@ -19,7 +21,6 @@ async function initApp() {
     if (user && !ban) {
       setCurrentUser(user);
       renderDashboard();
-      // Bắt đầu kiểm tra ban realtime sau khi đăng nhập
       setTimeout(startBanChecker, 1000);
       return;
     }
@@ -240,6 +241,7 @@ function renderManageTab(container) {
     ];
   }
 
+  // Tạo HTML cho container
   container.innerHTML = `
     <div class="sub-tabs" id="subTabs"></div>
     <div id="subContent" class="sub-content"></div>
@@ -250,7 +252,8 @@ function renderManageTab(container) {
 
   if (!subTabsEl || !subContent) return;
 
-  const renderSub = (id) => {
+  // Hàm render tab con
+  function renderSub(id) {
     // Xóa nội dung cũ
     subContent.innerHTML = '';
     
@@ -303,23 +306,26 @@ function renderManageTab(container) {
       console.error("Lỗi render tab:", error);
       subContent.innerHTML = `<div style="color: #ff4444; padding: 20px;">Lỗi: ${error.message}</div>`;
     }
-  };
+  }
 
   // Xóa các tab cũ
   subTabsEl.innerHTML = "";
   
+  // Tạo các tab
   subTabs.forEach((t, i) => {
-    const b = el("button", "sub-tab-btn" + (i === 0 ? " active" : ""), t.label);
-    b.onclick = function(tabId) {
-      return function() {
-        // Xóa active của tất cả tab
-        subTabsEl.querySelectorAll(".sub-tab-btn").forEach(x => x.classList.remove("active"));
-        this.classList.add("active");
-        
-        // Render tab được chọn
-        renderSub(tabId);
-      };
-    }(t.id);
+    const b = document.createElement("button");
+    b.className = "sub-tab-btn" + (i === 0 ? " active" : "");
+    b.textContent = t.label;
+    b.onclick = function() {
+      // Xóa active của tất cả tab
+      subTabsEl.querySelectorAll(".sub-tab-btn").forEach(function(x) {
+        x.classList.remove("active");
+      });
+      this.classList.add("active");
+      
+      // Render tab được chọn
+      renderSub(t.id);
+    };
     subTabsEl.appendChild(b);
   });
 
