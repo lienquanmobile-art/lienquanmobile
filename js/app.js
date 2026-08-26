@@ -9,7 +9,6 @@ const appRoot = () => document.getElementById("app");
 async function initApp() {
   await seedOwnerAccount();
   
-  // Kiểm tra ban khi load
   await checkBanOnLoad();
   
   const savedUsername = localStorage.getItem("currentUser");
@@ -19,7 +18,6 @@ async function initApp() {
     if (user && !ban) {
       setCurrentUser(user);
       renderDashboard();
-      // Bắt đầu kiểm tra ban realtime sau khi đăng nhập
       setTimeout(startBanChecker, 1000);
       return;
     }
@@ -29,14 +27,6 @@ async function initApp() {
 }
 
 function goToLogin() {
-  // Xóa khỏi hàng đợi game nếu có
-  const me = getCurrentUser();
-  if (me) {
-    if (typeof WORDCHAIN_QUEUE !== 'undefined') {
-      db.ref(WORDCHAIN_QUEUE + "/" + keyify(me.username)).remove();
-    }
-  }
-  
   setCurrentUser(null);
   if (banCheckInterval) {
     clearInterval(banCheckInterval);
@@ -64,7 +54,6 @@ function goToLogin() {
     if (!u || !p) { toast("Vui lòng nhập đầy đủ thông tin!"); return; }
     const res = await loginWithPassword(u, p);
     if (!res.ok) {
-      // Kiểm tra nếu bị ban thì hiển thị popup
       if (res.banned === true && res.banData) {
         showBanPopupLogin(res.banData, res.username);
         document.getElementById("loginMsg").innerHTML = '';
@@ -101,7 +90,6 @@ function goToTokenLogin() {
     if (!t) { toast("Vui lòng nhập token!"); return; }
     const res = await loginWithToken(t);
     if (!res.ok) {
-      // Kiểm tra nếu bị ban thì hiển thị popup
       if (res.banned === true && res.banData) {
         showBanPopupLogin(res.banData, res.username);
         document.getElementById("tokenMsg").innerHTML = '';
@@ -118,9 +106,7 @@ function goToTokenLogin() {
   document.getElementById("tokenBackBtn").onclick = () => goToLogin();
 }
 
-// Hàm hiển thị popup ban khi login
 function showBanPopupLogin(ban, username) {
-  // Kiểm tra nếu đã có popup rồi thì không tạo mới
   if (document.querySelector('.modal-overlay')) {
     return;
   }
@@ -158,7 +144,6 @@ function showBanPopupLogin(ban, username) {
   
   modal.querySelector('#banPopupLoginClose').onclick = function() {
     modal.remove();
-    // Xóa input để người dùng nhập lại
     const loginUser = document.getElementById('loginUser');
     const loginPass = document.getElementById('loginPass');
     const loginToken = document.getElementById('loginTokenInput');
@@ -167,7 +152,6 @@ function showBanPopupLogin(ban, username) {
     if (loginToken) loginToken.value = '';
   };
   
-  // Không cho phép tắt bằng click ra ngoài
   modal.onclick = function(e) {
     if (e.target === modal) return;
   };
@@ -176,17 +160,42 @@ function showBanPopupLogin(ban, username) {
 function renderDashboard() {
   const me = getCurrentUser();
   const isOwner = me.role === "owner";
+  const isVip = me.role === "vip";
   const isAdmin = me.role === "admin";
   const isUser = me.role === "user";
 
-  const bigTabs = isUser
-    ? [{ id: "home", label: "Trang Chủ" }, { id: "settings", label: "Cài Đặt" }]
-    : [{ id: "home", label: "Trang Chủ" }, { id: "manage", label: "Quản Lí" }, { id: "settings", label: "Cài Đặt" }];
+  // Xác định tab hiển thị
+  let bigTabs = [];
+  
+  if (isUser) {
+    bigTabs = [
+      { id: "home", label: "Trang Chủ" },
+      { id: "settings", label: "Cài Đặt" }
+    ];
+  } else if (isAdmin) {
+    bigTabs = [
+      { id: "home", label: "Trang Chủ" },
+      { id: "manage", label: "Quản Lí" },
+      { id: "settings", label: "Cài Đặt" }
+    ];
+  } else if (isVip) {
+    bigTabs = [
+      { id: "home", label: "Trang Chủ" },
+      { id: "manage", label: "Quản Lí" },
+      { id: "settings", label: "Cài Đặt" }
+    ];
+  } else if (isOwner) {
+    bigTabs = [
+      { id: "home", label: "Trang Chủ" },
+      { id: "manage", label: "Quản Lí" },
+      { id: "settings", label: "Cài Đặt" }
+    ];
+  }
 
   appRoot().innerHTML = `
     <div class="dash-wrap">
       <div class="dash-header">
-        <span class="dash-role">${me.username} <em>(${me.role})</em></span>
+        <span class="dash-role">${me.username} <em>(${me.role === "vip" ? "⭐ VIP" : me.role})</em></span>
         <div class="big-tabs" id="bigTabs"></div>
       </div>
       <div id="dashContent" class="dash-content"></div>
@@ -220,15 +229,39 @@ function renderManageTab(container) {
   if (!container) return;
   
   const me = getCurrentUser();
-  const subTabs = [
-    { id: "accounts", label: "Tài Khoản" },
-    { id: "create", label: "Tạo tài khoản" }
-  ];
-  if (me.role === "owner") subTabs.push({ id: "log", label: "Log" });
-  subTabs.push({ id: "cards", label: "Tạo thẻ" });
-  subTabs.push({ id: "giftcode", label: "Tạo giftcode" });
-  subTabs.push({ id: "ban", label: "Cấm tài khoản" });
-  subTabs.push({ id: "lienquan", label: "Tài khoản Liên Quân" });
+  const isOwner = me.role === "owner";
+  const isVip = me.role === "vip";
+  const isAdmin = me.role === "admin";
+  
+  // Xác định sub tabs
+  let subTabs = [];
+  
+  if (isOwner) {
+    subTabs = [
+      { id: "accounts", label: "Tài Khoản" },
+      { id: "create", label: "Tạo tài khoản" },
+      { id: "log", label: "Log" },
+      { id: "cards", label: "Tạo thẻ" },
+      { id: "giftcode", label: "Tạo giftcode" },
+      { id: "ban", label: "Cấm tài khoản" },
+      { id: "lienquan", label: "Tài khoản Liên Quân" }
+    ];
+  } else if (isVip) {
+    subTabs = [
+      { id: "log", label: "Log" },
+      { id: "ban", label: "Cấm tài khoản" },
+      { id: "lienquan", label: "Tài khoản Liên Quân" }
+    ];
+  } else if (isAdmin) {
+    subTabs = [
+      { id: "accounts", label: "Tài Khoản" },
+      { id: "create", label: "Tạo tài khoản" },
+      { id: "cards", label: "Tạo thẻ" },
+      { id: "giftcode", label: "Tạo giftcode" },
+      { id: "ban", label: "Cấm tài khoản" },
+      { id: "lienquan", label: "Tài khoản Liên Quân" }
+    ];
+  }
 
   container.innerHTML = `
     <div class="sub-tabs" id="subTabs"></div>
@@ -240,12 +273,9 @@ function renderManageTab(container) {
 
   if (!subTabsEl || !subContent) return;
 
-  // Hàm render tab con
   const renderSub = (id) => {
-    // Xóa nội dung cũ
     subContent.innerHTML = '';
     
-    // Clear các interval cũ
     if (accountsInterval) {
       clearInterval(accountsInterval);
       accountsInterval = null;
@@ -259,7 +289,6 @@ function renderManageTab(container) {
       window.__banListInterval = null;
     }
     
-    // Render tab tương ứng
     try {
       switch(id) {
         case "accounts":
@@ -275,8 +304,7 @@ function renderManageTab(container) {
           if (typeof renderCreateCardTab === 'function') {
             renderCreateCardTab(subContent);
           } else {
-            subContent.innerHTML = '<div style="color: #ff4444; padding: 20px;">Lỗi: renderCreateCardTab chưa được định nghĩa. Kiểm tra file cards.js</div>';
-            console.error("renderCreateCardTab is not defined");
+            subContent.innerHTML = '<div style="color: #ff4444; padding: 20px;">Lỗi: renderCreateCardTab chưa được định nghĩa</div>';
           }
           break;
         case "giftcode":
@@ -297,26 +325,21 @@ function renderManageTab(container) {
     }
   };
 
-  // Xóa các tab cũ
   subTabsEl.innerHTML = "";
   
   subTabs.forEach((t, i) => {
     const b = el("button", "sub-tab-btn" + (i === 0 ? " active" : ""), t.label);
     b.onclick = function(tabId) {
       return function() {
-        // Xóa active của tất cả tab
         subTabsEl.querySelectorAll(".sub-tab-btn").forEach(x => x.classList.remove("active"));
         this.classList.add("active");
-        
-        // Render tab được chọn
         renderSub(tabId);
       };
     }(t.id);
     subTabsEl.appendChild(b);
   });
 
-  // Mặc định hiển thị tab đầu tiên
-  renderSub("accounts");
+  renderSub(subTabs[0]?.id || "accounts");
 }
 
 window.addEventListener("DOMContentLoaded", initApp);
