@@ -1,12 +1,13 @@
 // ===== App chính =====
 
 let __currentUser = null;
-function getCurrentUser() { return __currentUser; }
-function setCurrentUser(u) { __currentUser = u; }
-
-// Khai báo biến global
 let accountsInterval = null;
 let lienquanInterval = null;
+let banCheckInterval = null;
+let banPopupShown = false;
+
+function getCurrentUser() { return __currentUser; }
+function setCurrentUser(u) { __currentUser = u; }
 
 const appRoot = () => document.getElementById("app");
 
