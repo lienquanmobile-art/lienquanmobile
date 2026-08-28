@@ -1,8 +1,6 @@
-// ===== Quản lí tài khoản (danh sách + tạo tài khoản) =====
+// ===== Quản lí tài khoản =====
 
 async function renderAccountsTab(container) {
-  container.innerHTML = `<div class="loading">Đang tải...</div>`;
-  
   container.innerHTML = `
     <h3 class="neon-title-sm">Quản lí tài khoản User</h3>
     <table class="neon-table">
@@ -22,6 +20,20 @@ async function renderAccountsTab(container) {
   `;
 
   await loadAccountsData();
+  
+  if (accountsInterval) {
+    clearInterval(accountsInterval);
+    accountsInterval = null;
+  }
+  
+  accountsInterval = setInterval(async function() {
+    if (!document.body.contains(container)) {
+      clearInterval(accountsInterval);
+      accountsInterval = null;
+      return;
+    }
+    await loadAccountsData();
+  }, 2000);
 }
 
 async function loadAccountsData() {
@@ -35,7 +47,6 @@ async function loadAccountsData() {
     const vips = Object.values(all).filter(u => u.role === "vip");
     const owner = Object.values(all).filter(u => u.role === "owner");
     
-    // Cập nhật bảng User
     const userTbody = document.getElementById("usersTbody");
     if (userTbody) {
       userTbody.innerHTML = "";
@@ -50,7 +61,6 @@ async function loadAccountsData() {
       });
     }
     
-    // Cập nhật bảng Admin
     const adminTbody = document.getElementById("adminsTbody");
     if (adminTbody) {
       adminTbody.innerHTML = "";
@@ -63,7 +73,6 @@ async function loadAccountsData() {
       });
     }
     
-    // Cập nhật bảng VIP
     const vipTbody = document.getElementById("vipTbody");
     if (vipTbody) {
       vipTbody.innerHTML = "";
@@ -86,12 +95,12 @@ async function renderCreateAccountTab(container) {
   const me = getCurrentUser();
   
   if (!me) {
-    container.innerHTML = `<div style="color: #ff4444; padding: 20px;">Vui lòng đăng nhập!</div>`;
+    container.innerHTML = `<div style="color:#ff4444;padding:20px;">Vui lòng đăng nhập!</div>`;
     return;
   }
   
   if (me.role !== "owner" && me.role !== "admin") {
-    container.innerHTML = `<div style="color: #ff4444; padding: 20px;">Bạn không có quyền tạo tài khoản!</div>`;
+    container.innerHTML = `<div style="color:#ff4444;padding:20px;">Bạn không có quyền tạo tài khoản!</div>`;
     return;
   }
   
@@ -164,12 +173,16 @@ async function renderCreateAccountTab(container) {
       try {
         await db.ref("users/" + keyify(username)).set(userData);
         await db.ref("tokens/" + token).set(username);
-        await addLog(`Tài khoản ${me.role}: "${me.username}" đã tạo tài khoản ${role} "${username}" lúc ${nowVN()}`);
+        
+        // Chỉ log khi tạo admin hoặc user, không log tạo VIP/Owner
+        if (role === "admin" || role === "user") {
+          await addLog(`Tài khoản ${me.role}: "${me.username}" đã tạo tài khoản ${role} "${username}" lúc ${nowVN()}`);
+        }
         
         const resultDiv = container.querySelector("#createAccResult");
         if (resultDiv) {
           resultDiv.innerHTML = `
-            <p style="color: #5dff8f;">✅ Tạo tài khoản thành công!</p>
+            <p style="color:#5dff8f;">✅ Tạo tài khoản thành công!</p>
             <p>Tên: <b>${username}</b></p>
             <p>Role: <b>${role === "vip" ? "⭐ VIP" : role}</b></p>
             <p>Token: <b class="glow-text">${token}</b></p>
@@ -178,15 +191,13 @@ async function renderCreateAccountTab(container) {
         
         container.querySelector("#newAccUsername").value = "";
         container.querySelector("#newAccPassword").value = "";
-        
         toast("Tạo tài khoản thành công!");
-        
         await loadAccountsData();
       } catch (error) {
         toast("Lỗi lưu dữ liệu: " + error.message);
         const resultDiv = container.querySelector("#createAccResult");
         if (resultDiv) {
-          resultDiv.innerHTML = `<p style="color: #ff4444;">❌ Lỗi: ${error.message}</p>`;
+          resultDiv.innerHTML = `<p style="color:#ff4444;">❌ Lỗi: ${error.message}</p>`;
         }
       }
     };
