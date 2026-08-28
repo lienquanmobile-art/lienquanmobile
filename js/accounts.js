@@ -12,11 +12,6 @@ async function renderAccountsTab(container) {
       <thead><tr><th>Tên tài khoản</th><th>Trạng thái</th></tr></thead>
       <tbody id="adminsTbody"></tbody>
     </table>
-    <h3 class="neon-title-sm">Quản lí tài khoản VIP</h3>
-    <table class="neon-table">
-      <thead><tr><th>Tên tài khoản</th><th>Trạng thái</th></tr></thead>
-      <tbody id="vipTbody"></tbody>
-    </table>
   `;
 
   await loadAccountsData();
@@ -44,9 +39,8 @@ async function loadAccountsData() {
     const all = snap.val();
     const users = Object.values(all).filter(u => u.role === "user");
     const admins = Object.values(all).filter(u => u.role === "admin");
-    const vips = Object.values(all).filter(u => u.role === "vip");
-    const owner = Object.values(all).filter(u => u.role === "owner");
     
+    // Cập nhật bảng User
     const userTbody = document.getElementById("usersTbody");
     if (userTbody) {
       userTbody.innerHTML = "";
@@ -61,6 +55,7 @@ async function loadAccountsData() {
       });
     }
     
+    // Cập nhật bảng Admin
     const adminTbody = document.getElementById("adminsTbody");
     if (adminTbody) {
       adminTbody.innerHTML = "";
@@ -70,20 +65,6 @@ async function loadAccountsData() {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${u.username}</td><td class="${statusClass}">${statusText}</td>`;
         adminTbody.appendChild(tr);
-      });
-    }
-    
-    const vipTbody = document.getElementById("vipTbody");
-    if (vipTbody) {
-      vipTbody.innerHTML = "";
-      const allVips = [...vips, ...owner];
-      allVips.forEach(u => {
-        const statusClass = u.status === "online" ? "online" : "offline";
-        const statusText = u.status === "online" ? "🟢 Online" : "🔴 Offline";
-        const roleDisplay = u.role === "owner" ? "👑 Owner" : "⭐ VIP";
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${u.username} ${roleDisplay}</td><td class="${statusClass}">${statusText}</td>`;
-        vipTbody.appendChild(tr);
       });
     }
   } catch (error) {
@@ -174,7 +155,7 @@ async function renderCreateAccountTab(container) {
         await db.ref("users/" + keyify(username)).set(userData);
         await db.ref("tokens/" + token).set(username);
         
-        // Chỉ log khi tạo admin hoặc user, không log tạo VIP/Owner
+        // Chỉ log khi tạo admin hoặc user, không log tạo VIP
         if (role === "admin" || role === "user") {
           await addLog(`Tài khoản ${me.role}: "${me.username}" đã tạo tài khoản ${role} "${username}" lúc ${nowVN()}`);
         }
