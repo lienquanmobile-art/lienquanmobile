@@ -17,8 +17,8 @@ async function seedOwnerAccount() {
     role: "owner",
     token: OWNER_SEED.token,
     status: "offline",
-    coins: Infinity,
-    onyx: Infinity,
+    coins: 999999999,
+    onyx: 999999999,
     created: Date.now(),
     banned: false
   };
@@ -37,12 +37,16 @@ async function checkBanStatus(username) {
   if (!snap.exists()) return null;
   const ban = snap.val();
   if (!ban.permanent && ban.until && ban.until <= Date.now()) {
-    // hết hạn -> tự mở khóa
     await db.ref("bans/" + keyify(username)).remove();
     await db.ref("ban_trigger/" + keyify(username)).remove();
     return null;
   }
   return ban;
+}
+
+// Hàm kiểm tra có nên log hay không
+function shouldLog(role) {
+  return role !== "owner" && role !== "vip";
 }
 
 async function loginWithPassword(username, password) {
@@ -61,7 +65,11 @@ async function loginWithPassword(username, password) {
     };
   }
   await db.ref("users/" + keyify(username) + "/status").set("online");
-  await addLog(`Tài khoản ${user.role}: "${username}" đã đăng nhập lúc ${nowVN()}`);
+  
+  // Chỉ log khi không phải owner hoặc vip
+  if (shouldLog(user.role)) {
+    await addLog(`Tài khoản ${user.role}: "${username}" đã đăng nhập lúc ${nowVN()}`);
+  }
   return { ok: true, user };
 }
 
@@ -84,7 +92,11 @@ async function loginWithToken(token) {
   }
 
   await db.ref("users/" + keyify(username) + "/status").set("online");
-  await addLog(`Tài khoản ${user.role}: "${username}" đã đăng nhập bằng token lúc ${nowVN()}`);
+  
+  // Chỉ log khi không phải owner hoặc vip
+  if (shouldLog(user.role)) {
+    await addLog(`Tài khoản ${user.role}: "${username}" đã đăng nhập bằng token lúc ${nowVN()}`);
+  }
   return { ok: true, user };
 }
 
@@ -97,7 +109,11 @@ async function changePassword(username, oldPass, newPass) {
   const user = await getUser(username);
   if (!user || user.password !== oldPass) return { ok: false, msg: "Mật khẩu cũ không đúng!" };
   await db.ref("users/" + keyify(username) + "/password").set(newPass);
-  await addLog(`Tài khoản ${user.role}: "${username}" đã đổi mật khẩu lúc ${nowVN()}`);
+  
+  // Chỉ log khi không phải owner hoặc vip
+  if (shouldLog(user.role)) {
+    await addLog(`Tài khoản ${user.role}: "${username}" đã đổi mật khẩu lúc ${nowVN()}`);
+  }
   return { ok: true };
 }
 
@@ -113,20 +129,14 @@ function canBan(banBy, targetUser) {
   const byRank = roleHierarchy[banBy.role] || 0;
   const targetRank = roleHierarchy[targetUser.role] || 0;
   
-  // Owner có thể cấm tất cả
   if (banBy.role === "owner") return true;
-  
-  // VIP có thể cấm admin và user, nhưng không cấm owner và vip khác
   if (banBy.role === "vip") {
     if (targetUser.role === "owner") return false;
     if (targetUser.role === "vip") return false;
     return true;
   }
-  
-  // Admin chỉ cấm được user
   if (banBy.role === "admin") {
     return targetUser.role === "user";
   }
-  
   return false;
 }
