@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rắn săn táo - PyGame</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body {
+            background: radial-gradient(circle at 50% 0%, #12122b 0%, #05050f 70%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Orbitron', sans-serif;
+            padding: 16px;
+        }
+        .snake-container {
+            max-width: 600px;
+            width: 100%;
+        }
+        .snake-box {
+            background: rgba(11,11,30,0.9);
+            border: 2px solid #00ffe0;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 0 40px rgba(0,255,224,0.1);
+            text-align: center;
+        }
+        .snake-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 20px;
+            color: #00ffe0;
+            text-shadow: 0 0 20px rgba(0,255,224,0.3);
+            margin-bottom: 12px;
+        }
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 16px;
+            background: rgba(0,255,224,0.05);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .hud span {
+            color: #b6f7ff;
+            font-size: 14px;
+        }
+        .hud b {
+            color: #f9f871;
+        }
+        #snakeCanvas {
+            background: #050510;
+            border: 2px solid #00ffe0;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            aspect-ratio: 1/1;
+            touch-action: none;
+        }
+        .controls {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 12px 0;
+        }
+        .ctrl-btn {
+            background: rgba(0,255,224,0.1);
+            border: 1px solid #00ffe0;
+            color: #00ffe0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            min-width: 60px;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+        .ctrl-btn:active {
+            background: #00ffe0;
+            color: #05050f;
+        }
+        .ctrl-btn:hover {
+            background: #00ffe0;
+            color: #05050f;
+        }
+        .game-over {
+            display: none;
+            margin-top: 12px;
+            padding: 16px;
+            background: rgba(255,68,68,0.1);
+            border: 1px solid #ff4444;
+            border-radius: 8px;
+        }
+        .game-over.show { display: block; }
+        .game-over h3 {
+            color: #ff4444;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        .game-over p {
+            color: #b6f7ff;
+            font-size: 14px;
+            margin: 4px 0;
+        }
+        .neon-btn {
+            background: linear-gradient(135deg, rgba(0,255,224,0.15), rgba(255,45,157,0.15));
+            border: 1px solid #00ffe0;
+            color: #00ffe0;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            transition: all 0.2s;
+            margin: 4px;
+        }
+        .neon-btn:hover {
+            background: #00ffe0;
+            color: #05050f;
+            box-shadow: 0 0 12px #00ffe0;
+        }
+        .neon-btn.danger {
+            color: #ff4444;
+            border-color: #ff4444;
+        }
+        .neon-btn.danger:hover {
+            background: #ff4444;
+            color: #05050f;
+        }
+        .gift-section {
+            display: none;
+            margin-top: 12px;
+            padding: 16px;
+            background: rgba(255,45,157,0.08);
+            border: 1px solid #ff2d9d;
+            border-radius: 8px;
+        }
+        .gift-section.show { display: block; }
+        .back-btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 24px;
+            background: transparent;
+            border: 1px solid #b537f2;
+            color: #b537f2;
+            border-radius: 6px;
+            text-decoration: none;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        .back-btn:hover {
+            background: #b537f2;
+            color: #fff;
+        }
+        .select-user {
+            background: #101026;
+            border: 1px solid #00ffe0;
+            border-radius: 6px;
+            color: #fff;
+            padding: 8px 12px;
+            font-family: 'Orbitron', sans-serif;
+            outline: none;
+            min-width: 150px;
+        }
+        .select-user:focus { box-shadow: 0 0 8px #00ffe0; }
+        @media (max-width: 500px) {
+            .snake-box { padding: 16px; }
+            .snake-title { font-size: 16px; }
+            .ctrl-btn { padding: 8px 14px; font-size: 16px; min-width: 50px; }
+            .hud span { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="snake-container">
+    <div class="snake-box">
+        <h1 class="snake-title">🐍 RẮN SĂN TÁO</h1>
+        
+        <div class="hud">
+            <span>🏆 Điểm: <b id="scoreDisplay">0</b></span>
+            <span>💰 Xu: <b id="coinsDisplay">0</b></span>
+            <span id="roleDisplay" style="color: #b537f2; font-size: 12px;"></span>
+        </div>
+        
+        <canvas id="snakeCanvas" width="500" height="500"></canvas>
+        
+        <div class="controls">
+            <button class="ctrl-btn" data-dir="up">▲</button>
+            <button class="ctrl-btn" data-dir="left">◄</button>
+            <button class="ctrl-btn" data-dir="down">▼</button>
+            <button class="ctrl-btn" data-dir="right">►</button>
+        </div>
+        
+        <div id="gameOver" class="game-over">
+            <h3>💀 GAME OVER</h3>
+            <p>Điểm số: <b id="finalScore">0</b></p>
+            <p id="coinsEarned">Xu kiếm được: <b>0</b></p>
+            <button class="neon-btn" id="restartBtn">🔄 Chơi lại</button>
+        </div>
+        
+        <div id="giftSection" class="gift-section">
+            <h4 style="color: #ff2d9d; margin-bottom: 8px;">🎁 Tặng xu cho User</h4>
+            <p style="color: #888; font-size: 13px; margin-bottom: 8px;">
+                Bạn có <b id="giftCoins" style="color: #f9f871;">0</b> xu để tặng
+            </p>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                <select id="userSelect" class="select-user">
+                    <option value="">-- Chọn user --</option>
+                </select>
+                <button class="neon-btn" id="giftBtn">🎁 Tặng xu</button>
+            </div>
+            <div id="giftResult" style="margin-top: 8px; font-size: 13px;"></div>
+        </div>
+        
+        <a href="index.html" class="back-btn">← Quay lại</a>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+<script>
+// ===== Firebase Config =====
+const firebaseConfig = {
+    apiKey: "AIzaSyAARnQrk-U3V9bmX0T9P-P3hk5ffFhjYUo",
+    authDomain: "lienquanmobile-6bcff.firebaseapp.com",
+    databaseURL: "https://lienquanmobile-6bcff-default-rtdb.firebaseio.com",
+    projectId: "lienquanmobile-6bcff",
+    storageBucket: "lienquanmobile-6bcff.firebasestorage.app",
+    messagingSenderId: "945809558015",
+    appId: "1:945809558015:web:2e55df43632e5da5273fca"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ===== Lấy thông tin user từ URL =====
+const urlParams = new URLSearchParams(window.location.search);
+const username = urlParams.get('user') || 'black';
+const role = urlParams.get('role') || 'owner';
+
+// ===== Game State =====
+const GRID_SIZE = 20;
+const CELL_SIZE = 500 / GRID_SIZE;
+
+let snake = [];
+let food = {};
+let direction = 'right';
+let nextDirection = 'right';
+let score = 0;
+let coins = 0;
+let gameRunning = false;
+let gameLoop = null;
+let gameSpeed = 120;
+
+// ===== DOM =====
+const canvas = document.getElementById('snakeCanvas');
+const ctx = canvas.getContext('2d');
+const scoreDisplay = document.getElementById('scoreDisplay');
+const coinsDisplay = document.getElementById('coinsDisplay');
+const finalScore = document.getElementById('finalScore');
+const coinsEarned = document.getElementById('coinsEarned');
+const gameOverDiv = document.getElementById('gameOver');
+const restartBtn = document.getElementById('restartBtn');
+const roleDisplay = document.getElementById('roleDisplay');
+const giftSection = document.getElementById('giftSection');
+const giftCoins = document.getElementById('giftCoins');
+const userSelect = document.getElementById('userSelect');
+const giftBtn = document.getElementById('giftBtn');
+const giftResult = document.getElementById('giftResult');
+
+// ===== Khởi tạo =====
+function init() {
+    roleDisplay.textContent = `👤 ${username} (${role})`;
+    
+    // Hiển thị gift section nếu là admin/owner/vip
+    if (role === 'admin' || role === 'owner' || role === 'vip') {
+        giftSection.classList.add('show');
+        loadUsers();
+    }
+    
+    startGame();
+}
+
+// ===== Tải danh sách user =====
+async function loadUsers() {
+    try {
+        const snap = await db.ref('users').get();
+        if (!snap.exists()) return;
+        const users = snap.val();
+        const userList = Object.values(users).filter(u => u.role === 'user');
+        
+        userSelect.innerHTML = '<option value="">-- Chọn user --</option>';
+        userList.forEach(u => {
+            const opt = document.createElement('option');
+            opt.value = u.username;
+            opt.textContent = u.username;
+            userSelect.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('Lỗi load users:', e);
+    }
+}
+
+// ===== Game Logic =====
+function startGame() {
+    gameOverDiv.classList.remove('show');
+    score = 0;
+    coins = 0;
+    direction = 'right';
+    nextDirection = 'right';
+    gameRunning = true;
+    
+    // Khởi tạo rắn
+    const startX = Math.floor(GRID_SIZE / 2);
+    const startY = Math.floor(GRID_SIZE / 2);
+    snake = [
+        {x: startX, y: startY},
+        {x: startX - 1, y: startY},
+        {x: startX - 2, y: startY}
+    ];
+    
+    spawnFood();
+    updateUI();
+    draw();
+    
+    if (gameLoop) clearInterval(gameLoop);
+    gameLoop = setInterval(gameTick, gameSpeed);
+}
+
+function spawnFood() {
+    while (true) {
+        const fx = Math.floor(Math.random() * GRID_SIZE);
+        const fy = Math.floor(Math.random() * GRID_SIZE);
+        if (!snake.some(s => s.x === fx && s.y === fy)) {
+            food = {x: fx, y: fy};
+            break;
+        }
+    }
+}
+
+function gameTick() {
+    if (!gameRunning) return;
+    
+    direction = nextDirection;
+    
+    // Tính đầu mới
+    const head = {...snake[0]};
+    switch(direction) {
+        case 'up': head.y--; break;
+        case 'down': head.y++; break;
+        case 'left': head.x--; break;
+        case 'right': head.x++; break;
+    }
+    
+    // Kiểm tra va chạm tường
+    if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+        endGame();
+        return;
+    }
+    
+    // Kiểm tra va chạm thân
+    if (snake.some(s => s.x === head.x && s.y === head.y)) {
+        endGame();
+        return;
+    }
+    
+    // Di chuyển
+    snake.unshift(head);
+    
+    // Kiểm tra ăn táo
+    if (head.x === food.x && head.y === food.y) {
+        score += 10;
+        coins += 10;
+        spawnFood();
+    } else {
+        snake.pop();
+    }
+    
+    updateUI();
+    draw();
+}
+
+function endGame() {
+    gameRunning = false;
+    if (gameLoop) {
+        clearInterval(gameLoop);
+        gameLoop = null;
+    }
+    
+    finalScore.textContent = score;
+    coinsEarned.textContent = coins;
+    gameOverDiv.classList.add('show');
+    
+    // Nếu là admin/owner/vip, cập nhật số xu có thể tặng
+    if (role === 'admin' || role === 'owner' || role === 'vip') {
+        giftCoins.textContent = coins;
+    } else {
+        // User: cộng xu vào tài khoản
+        addCoinsToUser(username, coins);
+    }
+}
+
+// ===== Cộng xu cho User =====
+async function addCoinsToUser(user, amount) {
+    try {
+        const ref = db.ref('users/' + user.replace(/[.#$\/\[\]]/g, '_') + '/coins');
+        const snap = await ref.get();
+        const current = snap.exists() ? snap.val() : 0;
+        await ref.set(current + amount);
+        console.log(`Đã cộng ${amount} xu cho ${user}`);
+    } catch (e) {
+        console.error('Lỗi cộng xu:', e);
+    }
+}
+
+// ===== Tặng xu =====
+giftBtn.onclick = async function() {
+    const targetUser = userSelect.value;
+    if (!targetUser) {
+        giftResult.innerHTML = '<span style="color: #ff4444;">❌ Vui lòng chọn user!</span>';
+        return;
+    }
+    if (coins <= 0) {
+        giftResult.innerHTML = '<span style="color: #ff4444;">❌ Bạn không có xu để tặng!</span>';
+        return;
+    }
+    
+    try {
+        // Kiểm tra user tồn tại
+        const userSnap = await db.ref('users/' + targetUser.replace(/[.#$\/\[\]]/g, '_')).get();
+        if (!userSnap.exists()) {
+            giftResult.innerHTML = '<span style="color: #ff4444;">❌ User không tồn tại!</span>';
+            return;
+        }
+        
+        // Cộng xu cho user
+        await addCoinsToUser(targetUser, coins);
+        
+        // Log
+        await db.ref('logs').push({
+            text: `Tài khoản ${role}: "${username}" đã tặng ${coins} xu cho user "${targetUser}" lúc ${new Date().toLocaleString('vi-VN')}`,
+            time: Date.now()
+        });
+        
+        giftResult.innerHTML = `<span style="color: #5dff8f;">✅ Đã tặng ${coins} xu cho ${targetUser}!</span>`;
+        giftCoins.textContent = '0';
+        coins = 0;
+        coinsDisplay.textContent = '0';
+        userSelect.value = '';
+        
+    } catch (e) {
+        console.error('Lỗi tặng xu:', e);
+        giftResult.innerHTML = `<span style="color: #ff4444;">❌ Lỗi: ${e.message}</span>`;
+    }
+};
+
+// ===== UI =====
+function updateUI() {
+    scoreDisplay.textContent = score;
+    coinsDisplay.textContent = coins;
+    if (role === 'admin' || role === 'owner' || role === 'vip') {
+        giftCoins.textContent = coins;
+    }
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Vẽ lưới
+    ctx.strokeStyle = 'rgba(0,255,255,0.05)';
+    for (let i = 0; i <= GRID_SIZE; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * CELL_SIZE, 0);
+        ctx.lineTo(i * CELL_SIZE, canvas.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i * CELL_SIZE);
+        ctx.lineTo(canvas.width, i * CELL_SIZE);
+        ctx.stroke();
+    }
+    
+    // Vẽ táo
+    ctx.fillStyle = '#ff2d55';
+    ctx.shadowColor = '#ff2d55';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.arc(food.x * CELL_SIZE + CELL_SIZE/2, food.y * CELL_SIZE + CELL_SIZE/2, CELL_SIZE/2 - 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Vẽ rắn
+    ctx.shadowBlur = 0;
+    snake.forEach((seg, i) => {
+        const gradient = ctx.createRadialGradient(
+            seg.x * CELL_SIZE + 6, seg.y * CELL_SIZE + 6, 2,
+            seg.x * CELL_SIZE + CELL_SIZE/2, seg.y * CELL_SIZE + CELL_SIZE/2, CELL_SIZE/2
+        );
+        if (i === 0) {
+            gradient.addColorStop(0, '#66fff0');
+            gradient.addColorStop(1, '#00ccbb');
+        } else {
+            gradient.addColorStop(0, '#00ffe0');
+            gradient.addColorStop(1, '#008877');
+        }
+        ctx.fillStyle = gradient;
+        ctx.shadowColor = i === 0 ? '#00ffe0' : 'transparent';
+        ctx.shadowBlur = i === 0 ? 18 : 0;
+        ctx.fillRect(seg.x * CELL_SIZE + 1, seg.y * CELL_SIZE + 1, CELL_SIZE - 2, CELL_SIZE - 2);
+        ctx.shadowBlur = 0;
+    });
+}
+
+// ===== Điều khiển =====
+document.querySelectorAll('.ctrl-btn').forEach(btn => {
+    btn.addEventListener('click', () => setDirection(btn.dataset.dir));
+    btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        setDirection(btn.dataset.dir);
+    });
+});
+
+document.addEventListener('keydown', (e) => {
+    const map = {
+        'ArrowUp': 'up', 'ArrowDown': 'down',
+        'ArrowLeft': 'left', 'ArrowRight': 'right',
+        'w': 'up', 'W': 'up',
+        's': 'down', 'S': 'down',
+        'a': 'left', 'A': 'left',
+        'd': 'right', 'D': 'right'
+    };
+    const dir = map[e.key];
+    if (dir) {
+        e.preventDefault();
+        setDirection(dir);
+    }
+});
+
+function setDirection(dir) {
+    if (!gameRunning) return;
+    const opposites = {
+        'up': 'down', 'down': 'up',
+        'left': 'right', 'right': 'left'
+    };
+    if (dir !== opposites[direction]) {
+        nextDirection = dir;
+    }
+}
+
+// ===== Restart =====
+restartBtn.onclick = startGame;
+
+// ===== Khởi chạy =====
+init();
+
+// ===== Kiểm tra user từ localStorage =====
+// Nếu đang dùng web chính, lấy thông tin từ localStorage
+try {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser && !username) {
+        // Có thể redirect với params hoặc dùng savedUser
+        console.log('User từ localStorage:', savedUser);
+    }
+} catch(e) {}
+</script>
+
+</body>
+</html>
